@@ -1,4 +1,3 @@
-package org.bosch
 package domain
 
-case class Parameter(name:String, unit: String)
+final case class Parameter(name:String, unit: String)
