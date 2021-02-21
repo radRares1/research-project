@@ -3,6 +3,7 @@ import sbt.Keys.libraryDependencies
 name := "research-project"
 organization in ThisBuild := "org.bosch"
 scalaVersion in ThisBuild := "2.12.13"
+scapegoatVersion in ThisBuild := "1.4.7"
 
 lazy val global = project
   .in(file("."))
