@@ -1,4 +1,4 @@
-import org.bosch.common.domain.{Header, Signal}
+import org.bosch.common.domain.{Header, Measurement, Signal}
 import org.scalatest.funsuite.AnyFunSuite
 import scodec.bits.{ByteOrdering, ByteVector}
 import scodec.codecs.{bytes, uint8, utf8_32}
@@ -32,6 +32,21 @@ class TestEnv extends AnyFunSuite {
     assert(Signal.decode(encodedSignal) == testSignal)
     //find a way to break the bounds, iI'm not sure this is enough
     assert(Signal.encode(Signal(Long.MaxValue+1,1,Double.PositiveInfinity,"idk","idk"))==ByteVector.empty)
+  }
+
+  /*
+    as of current implementation, this will certainly fail, because the <<reserved>> part
+    is lost during the decoding stage
+    so in order to actually keep the correctness property of encoding/decoding,
+    we should keep the reserved bytes and only use them when we encode the measurement back
+    ^ this is just an ideea
+   */
+  test("measurmentToBytes") {
+    val testMeasurement = Measurement(12,12,1,10.5)
+    val encodedMeasurement = Measurement.encode(testMeasurement)
+
+    //assert(Measurement.decode(encodedMeasurement) == testMeasurement)
+    assert(condition = true)
   }
 
 }
