@@ -41,12 +41,13 @@ class TestEnv extends AnyFunSuite {
     we should keep the reserved bytes and only use them when we encode the measurement back
     ^ this is just an ideea
    */
-  test("measurmentToBytes") {
-    val testMeasurement = Measurement(12,12,1,10.5)
-    val encodedMeasurement = Measurement.encode(testMeasurement)
 
-    //assert(Measurement.decode(encodedMeasurement) == testMeasurement)
-    assert(condition = true)
-  }
+//  test("measurmentToBytes") {
+//    val testMeasurement = Measurement(12,12,1,10.5)
+//    val encodedMeasurement = Measurement.encode(testMeasurement)
+//
+//    //assert(Measurement.decode(encodedMeasurement) == testMeasurement)
+//    assert(condition = true)
+//  }
 
 }
