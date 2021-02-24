@@ -1,9 +1,8 @@
 import org.bosch.common.domain.{Header, Measurement, Signal}
 import org.scalatest.funsuite.AnyFunSuite
+import scodec._
 import scodec.bits.{ByteOrdering, ByteVector}
-import scodec.codecs.{bytes, uint8, utf8_32}
 
-import java.math.BigInteger
 
 class TestEnv extends AnyFunSuite {
 
@@ -34,6 +33,18 @@ class TestEnv extends AnyFunSuite {
     assert(Signal.encode(Signal(Long.MaxValue+1,1,Double.PositiveInfinity,"idk","idk"))==ByteVector.empty)
   }
 
+  test(":~>: test") {
+    import scodec.codecs._
+    val a = uint8 :: uint8
+    case class Example(value1: Int, value3:Int)
+
+    implicit val exampleCodec: Codec[Example] = (
+      ("value1" | uint8) ::
+        ("value3" | uint8).unit(0) :~>:
+        ("value2" | uint8)
+      ).as[Example]
+  }
+
   /*
     as of current implementation, this will certainly fail, because the <<reserved>> part
     is lost during the decoding stage
@@ -42,12 +53,22 @@ class TestEnv extends AnyFunSuite {
     ^ this is just an ideea
    */
 
-//  test("measurmentToBytes") {
-//    val testMeasurement = Measurement(12,12,1,10.5)
-//    val encodedMeasurement = Measurement.encode(testMeasurement)
-//
-//    //assert(Measurement.decode(encodedMeasurement) == testMeasurement)
-//    assert(condition = true)
-//  }
+  test("measurmentToBytes") {
+    //println(ByteVector.fromLong(12, 4, ByteOrdering.BigEndian))
+    //println(ByteVector.fromValidHex("0x4028000000000000"))
+    val testMeasurement = Measurement(12,12,12,12)
+    val encodedMeasurement = Measurement.encode(testMeasurement)
+    //println(encodedMeasurement)
+
+    assert(Measurement.decode(encodedMeasurement) == testMeasurement)
+  }
+
+  test("bytesToMeasurement") {
+
+    //indeed the 0x0000000a bytes are skipped and the measurement is created
+    val testMeasurement = ByteVector.fromValidHex("0x0000000c0000000c0000000c0000000a4028000000000000")
+    val decodedMeasurement = Measurement.decode(testMeasurement)
+    assert(decodedMeasurement == Measurement(12,12,12,12.0))
+  }
 
 }
