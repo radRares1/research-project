@@ -1,42 +1,21 @@
 package org.bosch.common.domain
 
 import scodec.Codec
-import scodec.bits.ByteVector
-import scodec.codecs.{double, uint32, utf8_32}
+import scodec.codecs.{double, fixedSizeBytes, uint16, utf8_32L}
 
-final case class Signal(id: Long, offset: Double, factor: Double, name: String, unit: String)
+/**
+ * class needed to represent the Signals from our binary file
+ * @param id id of the Signal
+ * @param offset value needed to compute the value of the measurment
+ * @param factor same as above
+ * @param name the name of the Signal
+ * @param unit the machine unit that recorded the given Signal
+ */
+final case class Signal(id: Int, offset: Double, factor: Double, name: String, unit: String)
 
 object Signal{
-
-  implicit val codec: Codec[Signal] = (uint32 :: double :: double :: utf8_32 :: utf8_32).as[Signal]
-
-  def apply():Signal = {
-    new Signal(0,0,0,"","")
-  }
-
-  // the expected length of an encoded signal is 275,
-  // our result is 360, maybe it's because the codec encodes the class instance as well as the arguments
-  // need to dig deeper
-  def encode(signal:Signal):ByteVector = {
-
-    val result = codec.encode(signal).toOption
-    result match {
-      case Some(value) => value.bytes
-      case _ => ByteVector.empty
-    }
-
-  }
-
-
-  def decode(bytes:ByteVector):Signal = {
-
-    val result = codec.decode(bytes.bits).toOption
-
-    result match {
-      case Some(value) => value.value
-      case _ => Signal()
-    }
-
-  }
-
+  val NameSize = 200
+  val UnitSize = 55
+  implicit val codec: Codec[Signal] =
+    (uint16 :: double :: double :: fixedSizeBytes(NameSize, utf8_32L) :: fixedSizeBytes(UnitSize, utf8_32L)).as[Signal]
 }
