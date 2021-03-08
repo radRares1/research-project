@@ -5,7 +5,7 @@ import scodec.codecs.{double, fixedSizeBytes, uint16, utf8_32L}
 
 /**
  * class needed to represent the Signals from our binary file
- * @param id id of the Signal
+ * @param id signalId of the Signal
  * @param offset value needed to compute the value of the measurment
  * @param factor same as above
  * @param name the name of the Signal

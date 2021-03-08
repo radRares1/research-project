@@ -23,4 +23,7 @@ class MyBinFileTest extends AnyFunSpec with Matchers {
       testBinFile shouldBe MyBinFile.decode(encoded.require).require
     }
   }
+
+
+
 }
