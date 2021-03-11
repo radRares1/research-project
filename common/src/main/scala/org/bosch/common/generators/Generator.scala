@@ -1,14 +1,16 @@
 package org.bosch.common.generators
 
-import org.bosch.common.domain.{Header, Measurement, Signal}
+import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
+import scodec.codecs.byte
 
 import scala.util.Random.{nextDouble, nextInt}
+import java.io._
 
 object Generator {
 
   val RandomIntBound = 10
   val UnitSize = 3
-  val MeasurementBound = 100
+  val MeasurementBound = 100000
   val SecBound = 2000000000
   val UsecBound = 999999
 
@@ -25,25 +27,36 @@ object Generator {
       )
       ).toVector
 
-  def generateMeasurements: List[Measurement] = {
+  def generateMeasurements(signals: Vector[Signal]): List[Measurement] =
+    (for {
+      signal <- signals
+      _ <- 1 to nextInt(MeasurementBound)
+      } yield Measurement(
+        timeSec = nextInt(SecBound),
+        timeUsec = nextInt(UsecBound),
+        signalId = signal.id,
+        value = nextDouble * nextInt(RandomIntBound))
+      ).toList
 
-    //todo this should be a random number of signals or something similar
-    val header: Header = generateHeader(3)
-    val signals: Vector[Signal] = generateSignals(header)
-    val noOfMeasurementsForSignal = for (i <- 1 to signals.length) yield nextInt(MeasurementBound)
+  def writeToFile(header:Header, signals:Vector[Signal], measurements:List[Measurement], path:String = "common/src/main/scala/org/bosch/common/out"):Unit = {
 
-    signals.flatMap(s => {
-      for (i <- noOfMeasurementsForSignal) yield {
-        for (j <- 1 to i) yield {
-          Measurement(
-            timeSec = nextInt(SecBound),
-            timeUsec = nextInt(UsecBound),
-            signalId = s.id,
-            value = nextDouble * nextInt(RandomIntBound))
-        }
-      }
-    }).toList.flatten
+    val bytes = MyBinFile(header,signals,measurements).encode.require.bytes.toArray
 
+    try {
+      writeBytesToFile( path + "/file1.txt",bytes)
+    } catch {
+      case e: IOException =>
+        e.printStackTrace()
+    }
+  }
+
+  @throws[IOException]
+  private def writeBytesToFile(fileOutput: String, bytes: Array[Byte]): Unit = {
+    try {
+      val fos = new BufferedOutputStream(new FileOutputStream(fileOutput),16384)
+      try fos.write(bytes)
+      finally if (fos != null) fos.close()
+    }
   }
 
 

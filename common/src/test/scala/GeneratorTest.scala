@@ -1,5 +1,5 @@
 import org.bosch.common.domain.Header
-import org.bosch.common.generators.Generator._
+import org.bosch.common.generators.Generator.{generateMeasurements, _}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -22,12 +22,23 @@ class GeneratorTest extends AnyFunSpec with Matchers {
     }
   }
 
-  describe(" Measurements") {
+  describe("Measurements generator") {
     val header:Header = generateHeader(3)
     val signals = generateSignals(header)
-    val measurements = generateMeasurements
+    val measurements = generateMeasurements(signals)
     it("should contain the list of measurements and not be empty"){
       measurements.length should be > 0
     }
   }
+
+//  describe("File writer") {
+//    val header:Header = generateHeader(3)
+//    val signals = generateSignals(header)
+//    //the list concats are a temp "workaround" for the overflowing of the measurements, still not good enough because
+//    //the array with the mybinfile overflows anyway.
+//    val measurements = generateMeasurements(signals) ++ generateMeasurements(signals) ++ generateMeasurements(signals) ++
+//      generateMeasurements(signals) ++ generateMeasurements(signals) ++ generateMeasurements(signals) ++ generateMeasurements(signals)
+//    println(measurements.length)
+//    writeToFile(header,signals,measurements)
+//  }
 }
