@@ -10,7 +10,7 @@ object Generator {
 
   val RandomIntBound = 10
   val UnitSize = 3
-  val MeasurementBound = 100000
+  val MeasurementBound = 1000000
   val SecBound = 2000000000
   val UsecBound = 999999
 
@@ -31,19 +31,21 @@ object Generator {
     (for {
       signal <- signals
       _ <- 1 to nextInt(MeasurementBound)
-      } yield Measurement(
-        timeSec = nextInt(SecBound),
-        timeUsec = nextInt(UsecBound),
-        signalId = signal.id,
-        value = nextDouble * nextInt(RandomIntBound))
-      ).toList
+    } yield Measurement(
+      timeSec = nextInt(SecBound),
+      timeUsec = nextInt(UsecBound),
+      signalId = signal.id,
+      value = nextDouble * nextInt(RandomIntBound)
+    )).toList
 
-  def writeToFile(header:Header, signals:Vector[Signal], measurements:List[Measurement], path:String = "common/src/main/scala/org/bosch/common/out"):Unit = {
+  def writeToFile(header: Header,
+                  signals: Vector[Signal],
+                  measurements: List[Measurement],
+                  path: String = "common/src/main/scala/org/bosch/common/out"): Unit = {
 
-    val bytes = MyBinFile(header,signals,measurements).encode.require.bytes.toArray
-
+    val bytes = MyBinFile(header, signals, measurements).encode.require.bytes.toArray
     try {
-      writeBytesToFile( path + "/file1.txt",bytes)
+      writeBytesToFile(path + "/file1.txt", bytes)
     } catch {
       case e: IOException =>
         e.printStackTrace()
@@ -53,11 +55,10 @@ object Generator {
   @throws[IOException]
   private def writeBytesToFile(fileOutput: String, bytes: Array[Byte]): Unit = {
     try {
-      val fos = new BufferedOutputStream(new FileOutputStream(fileOutput),16384)
+      val fos = new BufferedOutputStream(new FileOutputStream(fileOutput), 16384)
       try fos.write(bytes)
       finally if (fos != null) fos.close()
     }
   }
-
 
 }
