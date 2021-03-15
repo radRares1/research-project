@@ -1,7 +1,7 @@
 package org.bosch.common.domain
 
 import scodec.Codec
-import scodec.codecs.uint16
+import scodec.codecs.uint16L
 
 /**
  * the beginning of the binary file
@@ -10,5 +10,5 @@ import scodec.codecs.uint16
 final case class Header(signalNumber:Int)
 
 object Header{
-  implicit val codec: Codec[Header] = uint16.as[Header]
+  implicit val codec: Codec[Header] = uint16L.as[Header]
 }

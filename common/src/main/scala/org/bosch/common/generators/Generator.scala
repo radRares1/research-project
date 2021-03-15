@@ -1,64 +1,65 @@
 package org.bosch.common.generators
 
 import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
-import scodec.codecs.byte
+import org.bosch.common.randomness.MeasurementRandomness
 
 import scala.util.Random.{nextDouble, nextInt}
-import java.io._
 
+/**
+ * helper object that generates signals, measurements and the whole file
+ */
 object Generator {
 
   val RandomIntBound = 10
   val UnitSize = 3
-  val MeasurementBound = 1000000
-  val SecBound = 2000000000
-  val UsecBound = 999999
+  val DefaultPath = "common/src/main/scala/org/bosch/common/out/file.txt"
 
-  def generateHeader(signalNumber: Int): Header = Header(signalNumber)
-
-  def generateSignals(header: Header): Vector[Signal] =
-    (for (i <- 1 to header.signalNumber) yield
+  /**
+   * function that generates a vector of signals
+   * @param header Header object which contains the number of signals
+   * @return a vector of Signals
+   */
+  def generateSignals(header: Header): Vector[Signal] = {
+    (1 to header.signalNumber).map(i =>
       Signal(
         id = i,
         offset = nextDouble * nextInt(RandomIntBound),
         factor = nextDouble * nextInt(RandomIntBound),
         "SignalName" + i,
         "UnitName" + nextInt(UnitSize)
-      )
-      ).toVector
+      )).toVector
+  }
 
-  def generateMeasurements(signals: Vector[Signal]): List[Measurement] =
+  /**
+   * function that generates a list of Measurements
+   * @param signals each measurement is produced by a signal
+   * @param randomness object that holds the randomness properties of the measurement
+   * @return a list of Measurements
+   */
+  def generateMeasurements(signals: Vector[Signal], randomness: MeasurementRandomness): List[Measurement] = {
+
     (for {
       signal <- signals
-      _ <- 1 to nextInt(MeasurementBound)
+      _ <- 1 to nextInt(randomness.maxMeasurements)
     } yield Measurement(
-      timeSec = nextInt(SecBound),
-      timeUsec = nextInt(UsecBound),
+      timeSec = nextInt(randomness.maxTimeSec),
+      timeUsec = nextInt(MeasurementRandomness.UsecBound),
       signalId = signal.id,
       value = nextDouble * nextInt(RandomIntBound)
     )).toList
-
-  def writeToFile(header: Header,
-                  signals: Vector[Signal],
-                  measurements: List[Measurement],
-                  path: String = "common/src/main/scala/org/bosch/common/out"): Unit = {
-
-    val bytes = MyBinFile(header, signals, measurements).encode.require.bytes.toArray
-    try {
-      writeBytesToFile(path + "/file1.txt", bytes)
-    } catch {
-      case e: IOException =>
-        e.printStackTrace()
-    }
   }
 
-  @throws[IOException]
-  private def writeBytesToFile(fileOutput: String, bytes: Array[Byte]): Unit = {
-    try {
-      val fos = new BufferedOutputStream(new FileOutputStream(fileOutput), 16384)
-      try fos.write(bytes)
-      finally if (fos != null) fos.close()
-    }
+  /**
+   * function that generates our MyBinFile
+   * @param signalNumber number of signals the file will contain
+   * @param measurementRandomness object that holds the randomness properties of the measurement
+   * @return MyBinFile object with signalNumber signals and measurements created by those signals
+   */
+  def generateBinFile(signalNumber: Int, measurementRandomness: MeasurementRandomness): MyBinFile = {
+    val header: Header = Header(signalNumber)
+    val signals = generateSignals(header)
+    val measurements = generateMeasurements(signals, measurementRandomness)
+    MyBinFile(header, signals, measurements)
   }
 
 }
