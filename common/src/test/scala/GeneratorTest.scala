@@ -31,7 +31,6 @@ class GeneratorTest extends AnyFunSpec with Matchers {
       val signals = generateSignals(header)
       val MaxMeasurements: Int = 10000
       val randomness: MeasurementRandomness = MeasurementRandomness(MaxMeasurements)
-      val measurements:List[Measurement] = generateMeasurements(signals, randomness)
       val myBinFileTest = generateBinFile(header.signalNumber,randomness)
       it("should generate the binary file correctly"){
         MyBinFile.decode(myBinFileTest.encode.require).require should equal(myBinFileTest)
