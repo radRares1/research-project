@@ -8,12 +8,12 @@ final case class MeasurementRandomness(maxMeasurements: Int, minTimeSec: Int, ma
 object MeasurementRandomness {
   val MaxMeasurements: Int = 10000
   val Offset: Int = 3600
-  val DividentForSeconds: Int = 10000000
-  val UsecBound = 65000
+  val DividentForSeconds: Int = 1000
+  val UsecBound = 9999999
   val maxTimeSec: Int = (System.currentTimeMillis() / DividentForSeconds).toInt
   def minTimeSec:Int = maxTimeSec - Offset
 
   def apply(maxMeasurement:Int = MaxMeasurements, offset:Int = Offset): MeasurementRandomness = {
-    MeasurementRandomness(maxMeasurement, maxTimeSec - offset, maxTimeSec % 65000)
+    new MeasurementRandomness(maxMeasurement,minTimeSec-offset,maxTimeSec)
   }
 }

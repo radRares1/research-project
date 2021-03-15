@@ -1,7 +1,7 @@
 package org.bosch.common.domain
 
 import scodec.Codec
-import scodec.codecs.{doubleL, fixedSizeBytes, uint16L, utf8_32L}
+import scodec.codecs.{doubleL, fixedSizeBytes, int32L, utf8_32L}
 
 /**
  * class needed to represent the Signals from our binary file
@@ -17,5 +17,5 @@ object Signal{
   val NameSize = 200
   val UnitSize = 55
   implicit val codec: Codec[Signal] =
-    (uint16L :: doubleL :: doubleL :: fixedSizeBytes(NameSize, utf8_32L) :: fixedSizeBytes(UnitSize, utf8_32L)).as[Signal]
+    (int32L :: doubleL :: doubleL :: fixedSizeBytes(NameSize, utf8_32L) :: fixedSizeBytes(UnitSize, utf8_32L)).as[Signal]
 }

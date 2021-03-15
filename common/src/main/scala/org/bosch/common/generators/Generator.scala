@@ -13,13 +13,12 @@ object Generator {
   val RandomIntBound = 10
   val UnitSize = 3
   val DefaultPath = "common/src/main/scala/org/bosch/common/out/file.txt"
-
   /**
    * function that generates a vector of signals
    * @param header Header object which contains the number of signals
    * @return a vector of Signals
    */
-  def generateSignals(header: Header): Vector[Signal] = {
+  def generateSignals(header: Header): Vector[Signal] =
     (1 to header.signalNumber).map(i =>
       Signal(
         id = i,
@@ -28,7 +27,6 @@ object Generator {
         "SignalName" + i,
         "UnitName" + nextInt(UnitSize)
       )).toVector
-  }
 
   /**
    * function that generates a list of Measurements
@@ -36,18 +34,17 @@ object Generator {
    * @param randomness object that holds the randomness properties of the measurement
    * @return a list of Measurements
    */
-  def generateMeasurements(signals: Vector[Signal], randomness: MeasurementRandomness): List[Measurement] = {
-
-    (for {
-      signal <- signals
+  def generateMeasurements(signals: Vector[Signal], randomness: MeasurementRandomness): List[Measurement] =
+    for {
+      signal <- signals.toList
       _ <- 1 to nextInt(randomness.maxMeasurements)
     } yield Measurement(
       timeSec = nextInt(randomness.maxTimeSec),
       timeUsec = nextInt(MeasurementRandomness.UsecBound),
       signalId = signal.id,
       value = nextDouble * nextInt(RandomIntBound)
-    )).toList
-  }
+    )
+
 
   /**
    * function that generates our MyBinFile
