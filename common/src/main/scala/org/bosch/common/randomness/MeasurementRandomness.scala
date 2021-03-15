@@ -9,11 +9,11 @@ object MeasurementRandomness {
   val MaxMeasurements: Int = 10000
   val Offset: Int = 3600
   val DividentForSeconds: Int = 1000
-  val UsecBound = 9999999
+  val UsecBound = 99999999
   val maxTimeSec: Int = (System.currentTimeMillis() / DividentForSeconds).toInt
-  def minTimeSec:Int = maxTimeSec - Offset
+  def minTimeSec(offset:Int):Int = maxTimeSec - offset
 
   def apply(maxMeasurement:Int = MaxMeasurements, offset:Int = Offset): MeasurementRandomness = {
-    new MeasurementRandomness(maxMeasurement,minTimeSec-offset,maxTimeSec)
+    new MeasurementRandomness(maxMeasurement,minTimeSec(offset),maxTimeSec)
   }
 }
