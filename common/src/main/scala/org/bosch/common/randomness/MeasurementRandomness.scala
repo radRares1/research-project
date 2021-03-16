@@ -9,7 +9,7 @@ object MeasurementRandomness {
   val MaxMeasurements: Int = 10000
   val Offset: Int = 3600
   val DividentForSeconds: Int = 1000
-  val UsecBound = 99999999
+  val UsecBound = 999999
   val maxTimeSec: Int = (System.currentTimeMillis() / DividentForSeconds).toInt
   def minTimeSec(offset:Int):Int = maxTimeSec - offset
 
