@@ -7,7 +7,7 @@ import scodec.bits.BitVector
 
 class MyBinFileTest extends AnyFunSpec with Matchers {
 
-  describe("MyBinFile encoding") {
+  describe("MyBinFile encoding and decoding") {
 
     val header: Header = Header(2)
     val signals: Signals = Vector[Signal](
@@ -22,7 +22,7 @@ class MyBinFileTest extends AnyFunSpec with Matchers {
     val testBinFile: MyBinFile = MyBinFile(header, signals, measurements)
     val encoded: Attempt[BitVector] = testBinFile.encode
 
-    it("should decode to the same initial value") {
+    it("should return the same file after encoding then decoding") {
       testBinFile shouldBe MyBinFile.decode(encoded.require).require
     }
   }

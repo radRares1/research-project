@@ -7,33 +7,37 @@ import org.scalatest.matchers.should.Matchers
 
 class GeneratorTest extends AnyFunSpec with Matchers {
 
-  describe("Signals generator") {
+  val SignalNumber: Int = 3
+  val header: Header = Header(SignalNumber)
+  val signals: Signals = generateSignals(header)
+  val MaxMeasurements: Int = 10000
+  val randomness: MeasurementRandomness = MeasurementRandomness(MaxMeasurements)
+  val measurements: Measurements = generateMeasurements(signals, randomness)
 
-    val header: Header = Header(3)
-    val signals: Signals = generateSignals(header)
-    it("should generate the vector of signals and not be empty") {
-      signals should not be empty
+  describe("Signals generator") {
+    it("should generate the same number of signals that is provided in header") {
+      signals should have size SignalNumber
     }
   }
 
   describe("Measurements generator") {
-    val header: Header = Header(3)
-    val signals: Signals = generateSignals(header)
-    val MaxMeasurements: Int = 10000
-    val randomness: MeasurementRandomness = MeasurementRandomness(MaxMeasurements)
-    val measurements: Measurements = generateMeasurements(signals, randomness)
     it("should contain the list of measurements and not be empty") {
-      measurements should not be empty
+      measurements.size should be < SignalNumber * MaxMeasurements
+    }
+
+    it("should contain signal number distinct IDs") {
+      measurements.map(_.signalId).distinct should have size SignalNumber
     }
   }
 
   describe("MyBinFile generator") {
-    val header: Header = Header(3)
-    val MaxMeasurements: Int = 10000
-    val randomness: MeasurementRandomness = MeasurementRandomness(MaxMeasurements)
-    val myBinFileTest: MyBinFile = generateBinFile(header.signalNumber, randomness)
+    val myBinFile: MyBinFile = generateBinFile(header.signalNumber, randomness)
     it("should generate the binary file correctly") {
-      MyBinFile.decode(myBinFileTest.encode.require).require should equal(myBinFileTest)
+      MyBinFile.decode(myBinFile.encode.require).require should equal(myBinFile)
+    }
+
+    it("should contain SignalNumber signals") {
+      myBinFile.signals should have size SignalNumber
     }
   }
 }
