@@ -5,16 +5,15 @@ import org.bosch.common.randomness.MeasurementRandomness
 
 import scala.util.Random.{nextDouble, nextInt}
 
-/**
- * helper object that generates signals, measurements and the whole file
- */
+/** Used to generate random signals and measurements for a binary file */
 object Generator {
-
   val RandomIntBound = 10
   val UnitSize = 3
   val DefaultPath = "common/src/main/scala/org/bosch/common/out/file.txt"
+
   /**
-   * function that generates a vector of signals
+   * Generates vector of signals
+   *
    * @param header Header object which contains the number of signals
    * @return a vector of Signals
    */
@@ -29,9 +28,10 @@ object Generator {
       )).toVector
 
   /**
-   * function that generates a list of Measurements
-   * @param signals each measurement is produced by a signal
-   * @param randomness object that holds the randomness properties of the measurement
+   * Generates list of Measurements
+   *
+   * @param signals    each measurement is produced by a signal
+   * @param randomness properties used to randomize a measurement
    * @return a list of Measurements
    */
   def generateMeasurements(signals: Vector[Signal], randomness: MeasurementRandomness): List[Measurement] =
@@ -40,17 +40,17 @@ object Generator {
       _ <- 1 to nextInt(randomness.maxMeasurements)
     } yield Measurement(
       timeSec = nextInt(randomness.maxTimeSec),
-      timeUsec = nextInt(MeasurementRandomness.UsecBound),
+      timeUSec = nextInt(MeasurementRandomness.UsecBound),
       signalId = signal.id,
       value = nextDouble * nextInt(RandomIntBound)
     )
 
-
   /**
-   * function that generates our MyBinFile
-   * @param signalNumber number of signals the file will contain
-   * @param measurementRandomness object that holds the randomness properties of the measurement
-   * @return MyBinFile object with signalNumber signals and measurements created by those signals
+   * Generates a complete binary file
+   *
+   * @param signalNumber          number of signals the file will contain
+   * @param measurementRandomness properties used to randomize a measurement
+   * @return randomized [[MyBinFile]]
    */
   def generateBinFile(signalNumber: Int, measurementRandomness: MeasurementRandomness): MyBinFile = {
     val header: Header = Header(signalNumber)
