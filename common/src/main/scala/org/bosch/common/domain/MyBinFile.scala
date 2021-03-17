@@ -12,7 +12,7 @@ import scodec.{Attempt, Codec}
  * @param measurements the List that holds the [[Measurement]]s
  * @todo find a way to switch from list to an iterator or stream
  */
-final case class MyBinFile(header: Header, signals: Vector[Signal], measurements: List[Measurement]) {
+final case class MyBinFile(header: Header, signals: Signals, measurements: Measurements) {
 
   /**
    * Encodes our binary file

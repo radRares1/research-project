@@ -1,14 +1,11 @@
 package org.bosch.common.generators
 
-import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
+import org.bosch.common.domain.{Header, Measurement, Measurements, MyBinFile, Signal, Signals}
 
 import scala.util.Random.{nextDouble, nextInt}
 
 /** Used to generate random signals and measurements for a binary file */
 object Generator {
-  val RandomIntBound = 10
-  val UnitSize = 3
-  val DefaultPath = "common/src/main/scala/org/bosch/common/out/file.txt"
 
   /**
    * Generates vector of signals
@@ -16,15 +13,16 @@ object Generator {
    * @param header Header object which contains the number of signals
    * @return a vector of Signals
    */
-  def generateSignals(header: Header): Vector[Signal] =
-    (1 to header.signalNumber).map(i =>
-      Signal(
-        id = i,
-        offset = nextDouble * nextInt(RandomIntBound),
-        factor = nextDouble * nextInt(RandomIntBound),
-        "SignalName" + i,
-        "UnitName" + nextInt(UnitSize)
-      )).toVector
+  def generateSignals(header: Header): Signals = {
+    val UnitSize = 3
+    (1 to header.signalNumber).map(i => Signal(
+      id = i,
+      offset = nextDouble,
+      factor = nextDouble,
+      name = "ch_" + i,
+      unit = "unit_" + nextInt(UnitSize))
+    ).toVector
+  }
 
   /**
    * Generates list of Measurements
@@ -33,16 +31,18 @@ object Generator {
    * @param randomness properties used to randomize a measurement
    * @return a list of Measurements
    */
-  def generateMeasurements(signals: Vector[Signal], randomness: MeasurementRandomness): List[Measurement] =
+  def generateMeasurements(signals: Signals, randomness: MeasurementRandomness): Measurements = {
+    val USecBound = 999999
     for {
       signal <- signals.toList
       _ <- 1 to nextInt(randomness.maxMeasurements)
     } yield Measurement(
       timeSec = nextInt(randomness.maxTimeSec),
-      timeUSec = nextInt(MeasurementRandomness.UsecBound),
+      timeUSec = nextInt(USecBound),
       signalId = signal.id,
-      value = nextDouble * nextInt(RandomIntBound)
+      value = nextDouble
     )
+  }
 
   /**
    * Generates a complete binary file
@@ -53,9 +53,8 @@ object Generator {
    */
   def generateBinFile(signalNumber: Int, measurementRandomness: MeasurementRandomness): MyBinFile = {
     val header: Header = Header(signalNumber)
-    val signals = generateSignals(header)
-    val measurements = generateMeasurements(signals, measurementRandomness)
+    val signals: Signals = generateSignals(header)
+    val measurements: Measurements = generateMeasurements(signals, measurementRandomness)
     MyBinFile(header, signals, measurements)
   }
-
 }

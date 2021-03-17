@@ -12,10 +12,9 @@ final case class MeasurementRandomness(maxMeasurements: Int, minTimeSec: Int, ma
 /** Holds the properties for generating the Measurements */
 object MeasurementRandomness {
   val MaxMeasurements: Int = 10000
-  val Offset: Int = 3600
+  val Offset: Int = 60 * 60 //1 hour
   val DividentForSeconds: Int = 1000
-  val UsecBound = 999999
-  val maxTimeSec: Int = (System.currentTimeMillis() / DividentForSeconds).toInt
+  val maxTimeSec: Int = (System.currentTimeMillis / DividentForSeconds).toInt
 
   /**
    * Minimum time in seconds in a measurement
@@ -28,11 +27,10 @@ object MeasurementRandomness {
   /**
    * Generates measurement randomness
    *
-   * @param maxMeasurement maximum number of measurement with the same signal id
-   * @param offset         number of seconds before max time
+   * @param maxMeasurement maximum number of measurement with the same signal id. By default [[MaxMeasurements]]
+   * @param offset         number of seconds before max time. By default 1 hour.
    * @return properties used to randomize a set of measurements
    */
-  def apply(maxMeasurement: Int = MaxMeasurements, offset: Int = Offset): MeasurementRandomness = {
-    new MeasurementRandomness(maxMeasurement, minTimeSec(offset), maxTimeSec)
-  }
+  def apply(maxMeasurement: Int = MaxMeasurements, offset: Int = Offset): MeasurementRandomness =
+    MeasurementRandomness(maxMeasurement, minTimeSec(offset), maxTimeSec)
 }
