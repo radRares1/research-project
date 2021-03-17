@@ -1,4 +1,4 @@
-package org.bosch.common.randomness
+package org.bosch.common.generators
 
 /**
  * Properties used to randomize a measurement

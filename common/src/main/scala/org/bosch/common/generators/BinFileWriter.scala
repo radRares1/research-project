@@ -1,11 +1,10 @@
-package org.bosch.common.writer
+package org.bosch.common.generators
 
 import java.io.{BufferedOutputStream, FileOutputStream}
 import java.nio.file.Paths
 
 import org.bosch.common.domain.MyBinFile
 import org.bosch.common.generators.Generator.{DefaultPath, generateBinFile}
-import org.bosch.common.randomness.MeasurementRandomness
 
 import scala.io.StdIn
 

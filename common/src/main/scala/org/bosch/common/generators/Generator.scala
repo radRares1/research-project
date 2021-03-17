@@ -1,7 +1,6 @@
 package org.bosch.common.generators
 
 import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
-import org.bosch.common.randomness.MeasurementRandomness
 
 import scala.util.Random.{nextDouble, nextInt}
 

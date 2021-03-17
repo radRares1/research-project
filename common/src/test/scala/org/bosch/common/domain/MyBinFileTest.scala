@@ -1,4 +1,5 @@
-import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
+package org.bosch.common.domain
+
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

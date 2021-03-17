@@ -1,6 +1,7 @@
+package org.bosch.common.generators
+
 import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
 import org.bosch.common.generators.Generator.{generateMeasurements, _}
-import org.bosch.common.randomness.MeasurementRandomness
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
