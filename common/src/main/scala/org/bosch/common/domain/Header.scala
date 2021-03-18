@@ -1,14 +1,15 @@
 package org.bosch.common.domain
 
 import scodec.Codec
-import scodec.codecs.uint16
+import scodec.codecs.int32L
 
 /**
- * the beginning of the binary file
+ * Header of a binary file
+ *
  * @param signalNumber the number of signals contained within the file
  */
-final case class Header(signalNumber:Int)
+final case class Header(signalNumber: Int)
 
-object Header{
-  implicit val codec: Codec[Header] = uint16.as[Header]
+object Header {
+  implicit val codec: Codec[Header] = int32L.as[Header]
 }
