@@ -12,10 +12,17 @@ lazy val global = project
 lazy val common = project
   .settings(resolvers += "Sonatype Public" at "https://oss.sonatype.org/content/groups/public/")
   .settings(
-      libraryDependencies += "org.scodec" %% "scodec-bits" % "1.1.6",
-      libraryDependencies += "org.scodec" %% "scodec-core" % "1.10.3",
-      libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.2",
-      libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test"
+    libraryDependencies += "org.scodec" %% "scodec-bits" % "1.1.6",
+    libraryDependencies += "org.scodec" %% "scodec-core" % "1.10.3",
+    libraryDependencies += "org.scodec" %% "scodec-stream" % "2.0.0",
+    libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.2",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test",
+    // https://mvnrepository.com/artifact/co.fs2/fs2-io
+    libraryDependencies += "co.fs2" %% "fs2-io" % "2.5.3"
+    // https://mvnrepository.com/artifact/co.fs2/fs2-io
+      //libraryDependencies += "co.fs2" %% "fs2-io" % "2.5-15-e328d68"
+
+
   )
 
 lazy val spark2 = project

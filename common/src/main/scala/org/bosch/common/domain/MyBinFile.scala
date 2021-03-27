@@ -3,6 +3,8 @@ package org.bosch.common.domain
 import scodec.bits.BitVector
 import scodec.codecs._
 import scodec.{Attempt, Codec}
+import scodec.stream
+import shapeless.HNil
 
 /**
  * Represents the structure of the binary file
@@ -12,7 +14,7 @@ import scodec.{Attempt, Codec}
  * @param measurements the List that holds the [[Measurement]]s
  * @todo find a way to switch from list to an iterator or stream
  */
-final case class MyBinFile(header: Header, signals: Signals, measurements: Measurements) {
+final case class MyBinFile(header: Header, signals: Signals) {
 
   /**
    * Encodes our binary file
@@ -26,8 +28,9 @@ object MyBinFile {
 
   implicit val codec: Codec[MyBinFile] = Header
     .codec
-    .flatPrepend(header => vectorOfN(provide(header.signalNumber), Signal.codec) :: list(Measurement.codec))
+    .flatZipHList(header => vectorOfN(provide(header.signalNumber), Signal.codec) )
     .as[MyBinFile]
+
 
   /**
    * Decodes our binary file

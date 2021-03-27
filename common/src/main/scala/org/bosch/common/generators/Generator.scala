@@ -44,6 +44,19 @@ object Generator {
     )
   }
 
+  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness): Stream[Measurement] = {
+    val USecBound = 999999
+    for {
+      _ <- (1 to nextInt(randomness.maxMeasurements)).toStream
+      signal <- signals
+    } yield Measurement(
+      timeSec = nextInt(randomness.maxTimeSec),
+      timeUSec = nextInt(USecBound),
+      signalId = signal.id,
+      value = nextDouble
+    )
+  }
+
   /**
    * Generates a complete binary file
    *
@@ -54,7 +67,6 @@ object Generator {
   def generateBinFile(signalNumber: Int, measurementRandomness: MeasurementRandomness): MyBinFile = {
     val header: Header = Header(signalNumber)
     val signals: Signals = generateSignals(header)
-    val measurements: Measurements = generateMeasurements(signals, measurementRandomness)
-    MyBinFile(header, signals, measurements)
+    MyBinFile(header, signals)
   }
 }
