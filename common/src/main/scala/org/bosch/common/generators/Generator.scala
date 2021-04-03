@@ -1,5 +1,6 @@
 package org.bosch.common.generators
 
+import fs2.{Pure, Stream}
 import org.bosch.common.domain.{Header, Measurement, Measurements, MyBinFile, Signal, Signals}
 
 import scala.util.Random.{nextDouble, nextInt}
@@ -44,8 +45,15 @@ object Generator {
     )
   }
 
-  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness): Stream[Measurement] = {
+  /**
+   * Generates a fs2 Stream of Measurements
+   * @param signals each measurement is produced by a signal
+   * @param randomness properties used to randomize a measurement
+   * @return
+   */
+  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness): Stream[Pure,Measurement] = {
     val USecBound = 999999
+    Stream.unfold(
     for {
       _ <- (1 to nextInt(randomness.maxMeasurements)).toStream
       signal <- signals
@@ -55,6 +63,10 @@ object Generator {
       signalId = signal.id,
       value = nextDouble
     )
+    ) {
+      case hd #:: tl => Some((hd, tl))
+      case _ => None
+    }
   }
 
   /**

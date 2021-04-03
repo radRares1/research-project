@@ -11,7 +11,7 @@ import scodec.codecs.{doubleL, ignore, int32L}
  * @param signalId id of the signal that produced the measurement
  * @param value    its value
  */
-final case class Measurement(timeSec: Int, timeUSec: Int, signalId: Int, value: Double)
+final case class Measurement(timeSec: Int, timeUSec: Int, signalId: Int, value: Double) extends Product with Serializable
 
 object Measurement {
   val ReservedSize = 4

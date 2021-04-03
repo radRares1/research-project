@@ -14,13 +14,14 @@ lazy val common = project
   .settings(
     libraryDependencies += "org.scodec" %% "scodec-bits" % "1.1.6",
     libraryDependencies += "org.scodec" %% "scodec-core" % "1.10.3",
-    libraryDependencies += "org.scodec" %% "scodec-stream" % "2.0.0",
+    libraryDependencies += "org.scodec" %% "scodec-stream" % "2.0-105-0d906dc",
     libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.2",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test",
-    // https://mvnrepository.com/artifact/co.fs2/fs2-io
-    libraryDependencies += "co.fs2" %% "fs2-io" % "2.5.3"
-    // https://mvnrepository.com/artifact/co.fs2/fs2-io
-      //libraryDependencies += "co.fs2" %% "fs2-io" % "2.5-15-e328d68"
+    libraryDependencies += "co.fs2" %% "fs2-io" % "2.4.3",
+    libraryDependencies += "co.fs2" %% "fs2-core" % "2.4.3"
+
+
+    //libraryDependencies += "co.fs2" %% "fs2-io" % "2.5-15-e328d68"
 
 
   )
