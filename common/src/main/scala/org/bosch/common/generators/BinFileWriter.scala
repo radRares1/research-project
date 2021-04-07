@@ -21,13 +21,10 @@ object BinFileWriter extends IOApp {
 
   /** Creates a MyBinFile and writes it to a file */
   def run(args: List[String]): IO[ExitCode] = {
+
     val signalNumber: Int = StdIn.readLine("Please input the number of signals: ").toInt
     val maxMeasurements: Int = StdIn.readLine("Please input the maximum number of measurements: ").toInt
     val path: String = StdIn.readLine("Please input where to save the file: ")
-    //2147483647
-    //1000000000
-    //10000000
-    //100000000
     val randomness: MeasurementRandomness = MeasurementRandomness(maxMeasurements)
     val binFile: MyBinFile = generateBinFile(signalNumber, randomness)
     val measurementsStream = Generator.generateStreamMeasurements(binFile.signals, randomness)
@@ -41,7 +38,7 @@ object BinFileWriter extends IOApp {
    * @param path      path where the file will be stored
    */
 
-  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[Pure, Measurement], path: String = DefaultPath): IO[ExitCode] = {
+  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[IO, Measurement], path: String = DefaultPath): IO[ExitCode] = {
 
     val measurementEnc = StreamEncoder.many(Measurement.codec).toPipeByte[IO]
     val fileInfoEnc = StreamEncoder

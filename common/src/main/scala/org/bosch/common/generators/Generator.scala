@@ -1,5 +1,6 @@
 package org.bosch.common.generators
 
+import cats.effect.IO
 import fs2.{Pure, Stream}
 import org.bosch.common.domain.{Header, Measurement, Measurements, MyBinFile, Signal, Signals}
 
@@ -49,25 +50,35 @@ object Generator {
    * Generates a fs2 Stream of Measurements
    * @param signals each measurement is produced by a signal
    * @param randomness properties used to randomize a measurement
-   * @return
+   * @return fs Stream of Measurements
    */
-  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness): Stream[Pure,Measurement] = {
+  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness): Stream[IO,Measurement] = {
     val USecBound = 999999
-    Stream.unfold(
-    for {
-      _ <- (1 to nextInt(randomness.maxMeasurements)).toStream
-      signal <- signals.toStream
+    val ourStream = for {
+      _ <- (1 to nextInt(randomness.maxMeasurements)).iterator
+      signal <- signals
     } yield Measurement(
       timeSec = nextInt(randomness.maxTimeSec),
       timeUSec = nextInt(USecBound),
       signalId = signal.id,
       value = nextDouble
     )
-    ) {
-      case hd #:: tl => Some((hd, tl))
-      case _ => None
-    }
+    Stream.fromIterator[IO](ourStream)
   }
+// alternative solution
+//  def anotherStream(signals: Vector[Signal], randomness: MeasurementRandomness): Stream[Pure,Measurement] =
+//    Stream.emits(signals.map(s => getMeasurementsForSignal(s,randomness))).flatten
+//
+//
+//  def getMeasurementsForSignal(signal:Signal,randomness: MeasurementRandomness): Stream[Pure,Measurement] = {
+//    val USecBound = 999999
+//    Stream.emits(1 to nextInt(randomness.maxMeasurements)).map( id => Measurement(
+//      timeSec = nextInt(randomness.maxTimeSec),
+//      timeUSec = nextInt(USecBound),
+//      signalId = signal.id,
+//      value = nextDouble
+//    ))
+//  }
 
   /**
    * Generates a complete binary file
