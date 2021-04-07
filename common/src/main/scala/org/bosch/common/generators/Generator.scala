@@ -56,7 +56,7 @@ object Generator {
     Stream.unfold(
     for {
       _ <- (1 to nextInt(randomness.maxMeasurements)).toStream
-      signal <- signals
+      signal <- signals.toStream
     } yield Measurement(
       timeSec = nextInt(randomness.maxTimeSec),
       timeUSec = nextInt(USecBound),

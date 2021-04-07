@@ -1,17 +1,18 @@
 package org.bosch.common.generators
 
 
-import cats.effect.{Blocker, ContextShift, IO}
+import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import fs2._
 import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
 import org.bosch.common.generators.Generator.generateBinFile
 import scodec.codecs.{provide, vectorOfN}
 import scodec.stream.{StreamDecoder, StreamEncoder}
+
 import java.nio.file.{Paths, StandardOpenOption}
 import scala.io.StdIn
 
 /** Entry point of the application for generating and writing a binary file */
-object BinFileWriter {
+object BinFileWriter extends IOApp {
 
   val DefaultPath: String = "common/src/main/scala/org/bosch/common/out/file.txt"
   val ChunkSize: Int = 4096
@@ -19,10 +20,14 @@ object BinFileWriter {
     IO.contextShift(scala.concurrent.ExecutionContext.Implicits.global)
 
   /** Creates a MyBinFile and writes it to a file */
-  def main(args: Array[String]): Unit = {
+  def run(args: List[String]): IO[ExitCode] = {
     val signalNumber: Int = StdIn.readLine("Please input the number of signals: ").toInt
     val maxMeasurements: Int = StdIn.readLine("Please input the maximum number of measurements: ").toInt
     val path: String = StdIn.readLine("Please input where to save the file: ")
+    //2147483647
+    //1000000000
+    //10000000
+    //100000000
     val randomness: MeasurementRandomness = MeasurementRandomness(maxMeasurements)
     val binFile: MyBinFile = generateBinFile(signalNumber, randomness)
     val measurementsStream = Generator.generateStreamMeasurements(binFile.signals, randomness)
@@ -36,7 +41,7 @@ object BinFileWriter {
    * @param path      path where the file will be stored
    */
 
-  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[Pure, Measurement], path: String = DefaultPath): Unit = {
+  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[Pure, Measurement], path: String = DefaultPath): IO[ExitCode] = {
 
     val measurementEnc = StreamEncoder.many(Measurement.codec).toPipeByte[IO]
     val fileInfoEnc = StreamEncoder
@@ -51,19 +56,22 @@ object BinFileWriter {
       Stream((myBinFile.header, myBinFile.signals))
         .through(fileInfoEnc.toPipeByte[IO])
         .through(sink)
-        .compile.drain
+        .compile
+        .drain
 
     }).unsafeRunSync()
 
     //write the measurements
     Blocker[IO].use(blocker => {
-      val sink = io.file.writeAll[IO](Paths.get(path), blocker, Seq(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
+      val sink = io.file.writeAll[IO](Paths.get(path),
+        blocker, Seq(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
 
       measurementStream
         .through(measurementEnc)
         .through(sink)
-        .compile.drain
-    }).unsafeRunSync()
+        .compile
+        .drain
+    }).as(ExitCode.Success)
 
   }
 
