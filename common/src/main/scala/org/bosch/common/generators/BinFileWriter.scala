@@ -5,7 +5,7 @@ import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import fs2._
 import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
 import org.bosch.common.generators.Generator.generateBinFile
-import scodec.codecs.{provide, vectorOfN}
+import scodec.codecs.{listOfN, provide, vectorOfN}
 import scodec.stream.{StreamDecoder, StreamEncoder}
 
 import java.nio.file.{Paths, StandardOpenOption}
@@ -15,7 +15,7 @@ import scala.io.StdIn
 object BinFileWriter extends IOApp {
 
   val DefaultPath: String = "common/src/main/scala/org/bosch/common/out/file.txt"
-  val ChunkSize: Int = 4096
+  val ChunkSize: Int = 262144
   implicit val csIO: ContextShift[IO] =
     IO.contextShift(scala.concurrent.ExecutionContext.Implicits.global)
 
@@ -27,7 +27,7 @@ object BinFileWriter extends IOApp {
     val path: String = StdIn.readLine("Please input where to save the file: ")
     val randomness: MeasurementRandomness = MeasurementRandomness(maxMeasurements)
     val binFile: MyBinFile = generateBinFile(signalNumber, randomness)
-    val measurementsStream = Generator.generateStreamMeasurements(binFile.signals, randomness)
+    val measurementsStream = Generator.generateStreamMeasurements(binFile.signals, randomness,chunkSize = ChunkSize)
     encodeToFile(binFile, measurementsStream, path)
   }
 
@@ -38,9 +38,9 @@ object BinFileWriter extends IOApp {
    * @param path      path where the file will be stored
    */
 
-  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[IO, Measurement], path: String = DefaultPath): IO[ExitCode] = {
+  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[IO, List[Measurement]], path: String = DefaultPath): IO[ExitCode] = {
 
-    val measurementEnc = StreamEncoder.many(Measurement.codec).toPipeByte[IO]
+    val measurementEnc = StreamEncoder.many(listOfN(provide(ChunkSize),Measurement.codec)).toPipeByte[IO]
     val fileInfoEnc = StreamEncoder
       .once(Header.codec
         .flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
@@ -78,12 +78,12 @@ object BinFileWriter extends IOApp {
    * @param chunkSize size of chunks
    * @return [[MyBinFile]] and a Stream[IO,Measurements]
    */
-  def decodeFromFile(path: String, chunkSize: Int = ChunkSize): (MyBinFile, Stream[IO, Measurement]) = {
+  def decodeFromFile(path: String, chunkSize: Int = ChunkSize): (MyBinFile, Stream[IO, List[Measurement]]) = {
     val fileDec = StreamDecoder
       .once(Header
         .codec
         .flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec))) ++
-      StreamDecoder.many(Measurement.codec)
+      StreamDecoder.many(listOfN(provide(ChunkSize),Measurement.codec))
 
     val rawData = Stream.resource(Blocker[IO]).flatMap { blocker =>
       fs2.io.file
@@ -93,7 +93,7 @@ object BinFileWriter extends IOApp {
 
     val fileData = rawData.take(1).compile.toList.unsafeRunSync().head.asInstanceOf[Tuple2[Header, Vector[Signal]]]
     val binFile = MyBinFile(fileData._1, fileData._2)
-    val measStream = rawData.drop(1).asInstanceOf[Stream[IO, Measurement]]
+    val measStream = rawData.drop(1).asInstanceOf[Stream[IO, List[Measurement]]]
     (binFile, measStream)
   }
 }
