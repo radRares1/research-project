@@ -3,15 +3,12 @@ package org.bosch.common.domain
 import scodec.bits.BitVector
 import scodec.codecs._
 import scodec.{Attempt, Codec}
-import scodec.stream
-import shapeless.HNil
 
 /**
  * Represents the structure of the binary file
  *
  * @param header       the [[Header]] of the binary file
  * @param signals      the Vector of [[Signal]]s in the file
- * @param measurements the List that holds the [[Measurement]]s
  * @todo find a way to switch from list to an iterator or stream
  */
 final case class MyBinFile(header: Header, signals: Signals) {

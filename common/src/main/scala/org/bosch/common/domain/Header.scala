@@ -11,5 +11,6 @@ import scodec.codecs.int32L
 final case class Header(signalNumber: Int)
 
 object Header {
+  val Size = 4
   implicit val codec: Codec[Header] = int32L.as[Header]
 }

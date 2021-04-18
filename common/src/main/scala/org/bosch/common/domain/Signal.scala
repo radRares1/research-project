@@ -17,6 +17,7 @@ final case class Signal(id: Int, offset: Double, factor: Double, name: String, u
 object Signal {
   val NameSize = 200
   val UnitSize = 55
+  val Size = 4 + 8 + 8 + NameSize + UnitSize
   implicit val codec: Codec[Signal] =
     (int32L :: doubleL :: doubleL :: fixedSizeBytes(NameSize, utf8_32L) :: fixedSizeBytes(UnitSize, utf8_32L)).as[Signal]
 }
