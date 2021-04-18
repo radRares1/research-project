@@ -52,7 +52,7 @@ object Generator {
    * @param randomness properties used to randomize a measurement
    * @return fs Stream of Measurements
    */
-  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness, chunkSize:Int): Stream[IO,List[Measurement]] = {
+  def generateStreamMeasurements(signals: Signals, randomness: MeasurementRandomness, chunkSize:Int): Stream[IO,Vector[Measurement]] = {
     val USecBound = 999999
     val ourStream = for {
       _ <- (1 to nextInt(randomness.maxMeasurements)).iterator
@@ -63,7 +63,7 @@ object Generator {
       signalId = signal.id,
       value = nextDouble
     )
-    Stream.fromIterator[IO](ourStream.grouped(chunkSize).map(_.toList))
+    Stream.fromIterator[IO](ourStream.grouped(chunkSize)).map(_.toVector)
   }
 // alternative solution
 //  def anotherStream(signals: Vector[Signal], randomness: MeasurementRandomness): Stream[Pure,Measurement] =

@@ -15,7 +15,7 @@ import scala.io.StdIn
 object BinFileWriter extends IOApp {
 
   val DefaultPath: String = "common/src/main/scala/org/bosch/common/out/file.txt"
-  val ChunkSize: Int = 262144
+  val ChunkSize: Int = 4096
   implicit val csIO: ContextShift[IO] =
     IO.contextShift(scala.concurrent.ExecutionContext.Implicits.global)
 
@@ -27,7 +27,7 @@ object BinFileWriter extends IOApp {
     val path: String = StdIn.readLine("Please input where to save the file: ")
     val randomness: MeasurementRandomness = MeasurementRandomness(maxMeasurements)
     val binFile: MyBinFile = generateBinFile(signalNumber, randomness)
-    val measurementsStream = Generator.generateStreamMeasurements(binFile.signals, randomness,chunkSize = ChunkSize)
+    val measurementsStream = Generator.generateStreamMeasurements(binFile.signals, randomness, chunkSize = ChunkSize)
     encodeToFile(binFile, measurementsStream, path)
   }
 
@@ -38,9 +38,9 @@ object BinFileWriter extends IOApp {
    * @param path      path where the file will be stored
    */
 
-  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[IO, List[Measurement]], path: String = DefaultPath): IO[ExitCode] = {
+  def encodeToFile(myBinFile: MyBinFile, measurementStream: Stream[IO, Vector[Measurement]], path: String = DefaultPath): IO[ExitCode] = {
 
-    val measurementEnc = StreamEncoder.many(listOfN(provide(ChunkSize),Measurement.codec)).toPipeByte[IO]
+    val measurementEnc = StreamEncoder.many(vectorOfN(provide(ChunkSize), Measurement.codec)).toPipeByte[IO]
     val fileInfoEnc = StreamEncoder
       .once(Header.codec
         .flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
@@ -61,7 +61,7 @@ object BinFileWriter extends IOApp {
     //write the measurements
     Blocker[IO].use(blocker => {
       val sink = io.file.writeAll[IO](Paths.get(path),
-        blocker, Seq(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))
+        blocker, Seq(StandardOpenOption.WRITE, StandardOpenOption.APPEND))
 
       measurementStream
         .through(measurementEnc)
@@ -74,26 +74,60 @@ object BinFileWriter extends IOApp {
 
   /**
    * Decodes a [[MyBinFile]] file along with its Measurements
-   * @param path path to the file
+   *
+   * @param path      path to the file
    * @param chunkSize size of chunks
    * @return [[MyBinFile]] and a Stream[IO,Measurements]
    */
-  def decodeFromFile(path: String, chunkSize: Int = ChunkSize): (MyBinFile, Stream[IO, List[Measurement]]) = {
+  def decodeFromFile(path: String, chunkSize: Int = ChunkSize): (MyBinFile, Stream[IO, Measurement]) = {
+
     val fileDec = StreamDecoder
       .once(Header
         .codec
-        .flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec))) ++
-      StreamDecoder.many(listOfN(provide(ChunkSize),Measurement.codec))
+        .flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
+
+    val fileInfoEnc = StreamEncoder
+      .once(Header.codec
+        .flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
+
+    //using this does not work :(, even if the data is encoded as a stream of vectors( or lists)
+    //val mD = StreamDecoder.tryMany(vectorOfN(provide(chunkSize),Measurement.codec))
+    val mD = StreamDecoder.tryMany(Measurement.codec)//.isolate(chunkSize)
 
     val rawData = Stream.resource(Blocker[IO]).flatMap { blocker =>
       fs2.io.file
         .readAll[IO](Paths.get(path), blocker, chunkSize)
-        .through(fileDec.toPipeByte)
+        .through(fileDec.toPipeByte[IO])
+        .take(1)
     }
 
-    val fileData = rawData.take(1).compile.toList.unsafeRunSync().head.asInstanceOf[Tuple2[Header, Vector[Signal]]]
+    val countData = Stream.resource(Blocker[IO]).flatMap { blocker =>
+      fs2.io.file
+        .readAll[IO](Paths.get(path), blocker, chunkSize)
+    }
+
+    println(countData.compile.toList.unsafeRunSync().length)
+
+    val fileData = rawData.compile.toList.unsafeRunSync().head.asInstanceOf[Tuple2[Header, Vector[Signal]]]
+    val a = fileInfoEnc.encode[IO](Stream(fileData)).compile.toList.unsafeRunSync().head.bytes.length
+    //same thing
+    val b = Stream(fileData).through(fileInfoEnc.toPipeByte[IO]).compile.toList.unsafeRunSync().length
+    println(b)
+    println(a)
+    val measd = Stream.resource(Blocker[IO]).flatMap { blocker =>
+      fs2.io.file
+        .readAll[IO](Paths.get(path), blocker, chunkSize)
+        .drop(b)
+        .through(mD.toPipeByte[IO])
+    }
+
+    println(fileData)
     val binFile = MyBinFile(fileData._1, fileData._2)
-    val measStream = rawData.drop(1).asInstanceOf[Stream[IO, List[Measurement]]]
-    (binFile, measStream)
+    //rawData.compile.toList.unsafeRunSync().foreach(println)
+    println(measd.compile.toList.unsafeRunSync())
+    //val measStream = rawData.drop(1).asInstanceOf[Stream[IO, Vector[Measurement]]]
+    println(binFile)
+    println(measd)
+    (binFile, measd)
   }
 }
