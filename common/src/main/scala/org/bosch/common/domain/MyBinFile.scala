@@ -9,10 +9,9 @@ import scodec.{Attempt, Codec}
  *
  * @param header       the [[Header]] of the binary file
  * @param signals      the Vector of [[Signal]]s in the file
- * @param measurements the List that holds the [[Measurement]]s
  * @todo find a way to switch from list to an iterator or stream
  */
-final case class MyBinFile(header: Header, signals: Signals, measurements: Measurements) {
+final case class MyBinFile(header: Header, signals: Signals) {
 
   /**
    * Encodes our binary file
@@ -26,8 +25,9 @@ object MyBinFile {
 
   implicit val codec: Codec[MyBinFile] = Header
     .codec
-    .flatPrepend(header => vectorOfN(provide(header.signalNumber), Signal.codec) :: list(Measurement.codec))
+    .flatZipHList(header => vectorOfN(provide(header.signalNumber), Signal.codec) )
     .as[MyBinFile]
+
 
   /**
    * Decodes our binary file
