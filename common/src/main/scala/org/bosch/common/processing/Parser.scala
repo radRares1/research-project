@@ -64,8 +64,8 @@ object Parser {
     Record(
       filename = fileName,
       parameter = Parameter(signal),
-      timeVector = timeArrayFromMeasurements(measurements),
-      valueVector = valueArrayFromMeasurements(signal, measurements)
+      timeArray = timeArrayFromMeasurements(measurements),
+      valueArray = valueArrayFromMeasurements(signal, measurements)
     )
 
   /**
@@ -78,7 +78,7 @@ object Parser {
       .flatMap(e => e.toSeq)
       .groupBy(_._1)
       .map { case (k, v) => k -> v.map(_._2) }
-      .map(e => (e._1, e._2.reduce(_ ++ _)))
+      .map(e => (e._1, e._2.reduceOption(_ ++ _).getOrElse(Stream())))
 
   /**
    * Parse a given file
@@ -94,10 +94,15 @@ object Parser {
       .chunkN(ChunkSize)
         .evalMap(e => IO(splitChunkById(e)))
     )
-      .map(e => (file.signals.find(s => s.id==e._1).get,e._2))
+      .map(e => (file.signals.find(s => s.id==e._1).getOrElse(Signal(1,1,1,"1","1")),e._2))
       .map(e => transformToRecord(fileName,e._1,e._2))
       .toList
 
+  }
+
+  def main(args: Array[String]): Unit = {
+    val a = parseFile()
+    a.foreach(e=> println(e.valueArray.toList))
   }
 
 }
