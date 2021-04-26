@@ -1,9 +1,9 @@
 package org.bosch.common.processing
 
-import cats.effect.{IO}
+import cats.effect.IO
 import fs2.{Chunk, Pure, Stream}
 import org.bosch.common.domain.{Measurement, Parameter, Record, Signal}
-import org.bosch.common.generators.BinFileWriter.decodeFromFile
+import org.bosch.common.generators.BinFileWriter.{decodeFromFile, decodeFromStream}
 
 object Parser {
 
@@ -100,9 +100,25 @@ object Parser {
 
   }
 
+  def parseStream(rawStream: Stream[IO,Byte],path:String):List[Record] = {
+    val (file,measurements) = decodeFromStream(rawStream)
+    val fileName: String = path.split("/").last
+
+    splitDataBySignals(
+      measurements
+        .chunkN(ChunkSize)
+        .evalMap(e => IO(splitChunkById(e)))
+    )
+      .map(e => (file.signals.find(s => s.id==e._1).getOrElse(Signal(1,1,1,"1","1")),e._2))
+      .map(e => transformToRecord(fileName,e._1,e._2))
+      .toList
+
+  }
+
   def main(args: Array[String]): Unit = {
     val a = parseFile()
     a.foreach(e=> println(e.valueArray.toList))
+
   }
 
 }
