@@ -7,7 +7,6 @@ scapegoatVersion in ThisBuild := "1.4.7"
 
 lazy val global = project
   .in(file("."))
-  .dependsOn(common, spark2, spark3)
   .aggregate(common, spark2, spark3)
 
 lazy val common = project
@@ -25,10 +24,11 @@ lazy val common = project
 lazy val spark2 = project
   .settings(
     libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.7",
-    libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.7"
+    libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.7",
+      libraryDependencies += "commons-io" % "commons-io" % "2.6"
+
   )
   .dependsOn(common)
-  .aggregate(common)
 
 lazy val spark3 = project
   .settings(libraryDependencies += "org.apache.spark" %% "spark-core" % "3.0.1")

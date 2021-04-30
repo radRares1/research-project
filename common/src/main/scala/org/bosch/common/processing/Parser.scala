@@ -7,9 +7,8 @@ import org.bosch.common.generators.BinFileWriter.{decodeFromFile, decodeFromStre
 
 object Parser {
 
-  val DefaultPath:String = "common/src/main/scala/org/bosch/common/out/a.txt"
+  val DefaultPath:String = "common/src/main/scala/org/bosch/common/out/ab"
   val ChunkSize: Int = 4096
-
   /**
    * Splits a Chunk into a map of Measurements by their signalId
    * @param chunk Chunk of n Measurements
@@ -85,7 +84,7 @@ object Parser {
    * @param path path to the file
    * @return List[Record]
    */
-  def parseFile(path:String = DefaultPath): List[Record] = {
+  def parseFile(path:String = DefaultPath): scala.Stream[Record] = {
     val (file,measurements) = decodeFromFile(path)
     val fileName: String = path.split("/").last
 
@@ -96,11 +95,11 @@ object Parser {
     )
       .map(e => (file.signals.find(s => s.id==e._1).getOrElse(Signal(1,1,1,"1","1")),e._2))
       .map(e => transformToRecord(fileName,e._1,e._2))
-      .toList
+      .toStream
 
   }
 
-  def parseStream(rawStream: Stream[IO,Byte],path:String):List[Record] = {
+  def parseStream(rawStream: Stream[IO,Byte],path:String):scala.Stream[Record] = {
     val (file,measurements) = decodeFromStream(rawStream)
     val fileName: String = path.split("/").last
 
@@ -111,14 +110,9 @@ object Parser {
     )
       .map(e => (file.signals.find(s => s.id==e._1).getOrElse(Signal(1,1,1,"1","1")),e._2))
       .map(e => transformToRecord(fileName,e._1,e._2))
-      .toList
+      .toStream
 
   }
 
-  def main(args: Array[String]): Unit = {
-    val a = parseFile()
-    a.foreach(e=> println(e.valueArray.toList))
-
-  }
 
 }
