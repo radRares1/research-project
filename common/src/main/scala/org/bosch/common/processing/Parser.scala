@@ -114,5 +114,10 @@ object Parser {
 
   }
 
+  def main(args: Array[String]): Unit = {
+    val a = parseFile("common/src/main/scala/org/bosch/common/out/ab")
+    println(a)
+  }
+
 
 }

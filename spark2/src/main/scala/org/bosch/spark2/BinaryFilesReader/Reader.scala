@@ -22,8 +22,6 @@ object Reader {
 
   def main(args: Array[String]) {
 
-    println((Stream(1, 2, 3) ++ Stream(4, 5, 6)).toVector)
-
     Logger.getLogger("org").setLevel(Level.ERROR)
 
     val ss = SparkSession
@@ -35,7 +33,7 @@ object Reader {
     // Create a SparkContext using every core of the local machine
     val sc = ss.sparkContext
 
-    val file = sc.binaryFiles("common/src/main/scala/org/bosch/common/out/ab")
+    val file = sc.binaryFiles("common/src/main/scala/org/bosch/common/out/a.txt")
 
     import ss.implicits._
 
