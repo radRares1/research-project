@@ -14,7 +14,10 @@ import org.apache.spark.sql.sources.v2.reader.SupportsPushDownRequiredColumns
 
 
 class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
-  with SupportsPushDownRequiredColumns {
+  with SupportsPushDownRequiredColumns with SupportsPushDownFilters {
+
+  var pushedFilters1: Array[Filter] = Array[Filter]()
+
   override def readSchema(): StructType = SimpleDataSourceReader.schema
 
   override def planInputPartitions(): util.List[InputPartition[InternalRow]] = {
@@ -24,6 +27,13 @@ class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
 
   override def pruneColumns(requiredSchema: StructType): Unit = ()
 
+   override def pushFilters(filters: Array[Filter]): Array[Filter] = {
+    println("Filters " + filters.toList)
+    pushedFilters1 = filters
+    pushedFilters1
+  }
+
+   override def pushedFilters(): Array[Filter] = pushedFilters1
 }
 
 object SimpleDataSourceReader {
