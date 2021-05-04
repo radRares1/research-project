@@ -16,7 +16,7 @@ import scala.io.StdIn
 object BinFileWriter extends IOApp {
 
   val DefaultPath: String = "common/src/main/scala/org/bosch/common/out/file.txt"
-  val ChunkSize: Int = 4096
+  val ChunkSize: Int = 2048
   implicit val csIO: ContextShift[IO] =
     IO.contextShift(scala.concurrent.ExecutionContext.Implicits.global)
 
@@ -103,5 +103,28 @@ object BinFileWriter extends IOApp {
     }
 
     (MyBinFile(header, signals), measurements)
+  }
+
+  def decodeFromStream(rawStream: Stream[IO, Byte]): (MyBinFile, Stream[IO, Measurement]) = {
+
+    val headerAndSignalsDecoder: StreamDecoder[(Header, Vector[Signal])] = StreamDecoder
+      .once(Header.codec.flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
+
+    val measurementDecoder: StreamDecoder[Measurement] = StreamDecoder.many(Measurement.codec)
+
+    val (header, signals) = rawStream
+      .through(headerAndSignalsDecoder.toPipeByte[IO])
+      .head
+      .compile
+      .toList
+      .unsafeRunSync()
+      .head
+
+    val measurements: Stream[IO, Measurement] = rawStream
+        .drop(Header.Size + signals.length * Signal.Size)
+        .through(measurementDecoder.toPipeByte[IO])
+
+    (MyBinFile(header, signals), measurements)
+
   }
 }

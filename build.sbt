@@ -19,11 +19,15 @@ lazy val common = project
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test",
     libraryDependencies += "co.fs2" %% "fs2-io" % "2.4.3",
     libraryDependencies += "co.fs2" %% "fs2-core" % "2.4.3"
-
   )
 
 lazy val spark2 = project
-  .settings(libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.7")
+  .settings(
+    libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.7",
+    libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.7",
+      libraryDependencies += "commons-io" % "commons-io" % "2.6"
+
+  )
   .dependsOn(common)
 
 lazy val spark3 = project
