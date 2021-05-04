@@ -1,6 +1,5 @@
 package org.bosch.spark2.DataSourceV2Reader.DataSourceV2
 
-import com.sun.tools.jdeprscan.scan.Scan
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
@@ -17,7 +16,7 @@ class SimpleDataSourceReader(val filePath: String) extends DataSourceReader
 
   private var filters: Array[Filter] = Array.empty
   private lazy val pushedArrowFilters: Array[Filter] = {
-    filters // todo filter validation & pushdown
+    filters
   }
   val canPush = true
 
