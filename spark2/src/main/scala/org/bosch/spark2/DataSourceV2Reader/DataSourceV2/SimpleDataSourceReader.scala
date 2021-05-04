@@ -1,8 +1,7 @@
 package org.bosch.spark2.DataSourceV2Reader.DataSourceV2
 
+import com.sun.tools.jdeprscan.scan.Scan
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.plans.logical
-import org.apache.spark.sql.catalyst.plans.logical.Filter
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
 import org.apache.spark.sql.types.{ArrayType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
@@ -13,10 +12,14 @@ import org.apache.spark.sql.sources.v2.reader.SupportsPushDownFilters
 import org.apache.spark.sql.sources.v2.reader.SupportsPushDownRequiredColumns
 
 
-class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
+class SimpleDataSourceReader(val filePath: String) extends DataSourceReader
   with SupportsPushDownRequiredColumns with SupportsPushDownFilters {
 
-  var pushedFilters1: Array[Filter] = Array[Filter]()
+  private var filters: Array[Filter] = Array.empty
+  private lazy val pushedArrowFilters: Array[Filter] = {
+    filters // todo filter validation & pushdown
+  }
+  val canPush = true
 
   override def readSchema(): StructType = SimpleDataSourceReader.schema
 
@@ -25,21 +28,28 @@ class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
     util.Arrays.asList(new SimpleDataSourcePartition(filePath))
   }
 
-  override def pruneColumns(requiredSchema: StructType): Unit = ()
-
-   override def pushFilters(filters: Array[Filter]): Array[Filter] = {
-    println("Filters " + filters.toList)
-    pushedFilters1 = filters
-    pushedFilters1
+  def pushFilters(filters: Array[Filter]): Array[Filter] = {
+    this.filters = filters
+    this.filters
   }
 
-   override def pushedFilters(): Array[Filter] = pushedFilters1
+  override def pushedFilters: Array[Filter] = pushedArrowFilters
+
+  //  override def pushFilters(filters: Array[Filter]): Array[Filter] = {
+  //    println("Filters " + filters.toList)
+  //    pushedFilters1 = filters
+  //    pushedFilters1
+  //  }
+  //
+  //  override def pushedFilters(): Array[Filter] = pushedFilters1
+  override def pruneColumns(requiredSchema: StructType): Unit = ???
+
 }
 
 object SimpleDataSourceReader {
   val schema: StructType = {
     StructType(Array(StructField("filename", StringType),
-      StructField("paramter", ArrayType(StringType)),
+      StructField("parameter", ArrayType(StringType)),
       StructField("timeArray", ArrayType(LongType)),
       StructField("valueArray", ArrayType(FloatType))))
   }

@@ -50,7 +50,6 @@ class SimpleDataSourcePartitionReader(val filePath:String) extends InputPartitio
     InternalRow(fileName,parameterArray, timeArray,valueArray)
   }
 
-  override def close(): Unit = {
+  override def close(): Unit = ()
 
-  }
 }
