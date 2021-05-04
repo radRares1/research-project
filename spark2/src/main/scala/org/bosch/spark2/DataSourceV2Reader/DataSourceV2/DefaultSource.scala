@@ -6,6 +6,6 @@ import org.apache.spark.sql.sources.v2.{DataSourceOptions, DataSourceV2, ReadSup
 class DefaultSource extends DataSourceV2 with ReadSupport{
 
   override def createReader(options: DataSourceOptions): DataSourceReader =
-    new SimpleDataSourceReader(options.get("filePath").get())
+    new SimpleDataSourceReader(options.get("path").get())
 
 }

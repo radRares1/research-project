@@ -23,6 +23,7 @@ class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
   }
 
   override def pruneColumns(requiredSchema: StructType): Unit = ()
+
 }
 
 object SimpleDataSourceReader {
