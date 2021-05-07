@@ -4,7 +4,6 @@ import org.apache.spark.sql.SparkSession
 
 object DataSourceReader3 {
 
-
   def main(args: Array[String]): Unit = {
 
     val ss = SparkSession
@@ -15,9 +14,10 @@ object DataSourceReader3 {
 
     val dataset = ss.read
       .format("org.bosch.spark3.CustomBinary")
-      .load("common/src/main/scala/org/bosch/common/out/a.txt")
+      .load("common/src/main/scala/org/bosch/common/out/abcd")
 
     dataset.show()
+    println(dataset.rdd.getNumPartitions)
 
   }
 

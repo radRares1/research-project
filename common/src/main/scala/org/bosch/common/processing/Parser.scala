@@ -2,13 +2,14 @@ package org.bosch.common.processing
 
 import cats.effect.IO
 import fs2.{Chunk, Pure, Stream}
-import org.bosch.common.domain.{Measurement, Parameter, Record, Signal}
-import org.bosch.common.generators.BinFileWriter.{decodeFromFile, decodeFromStream}
+import org.bosch.common.domain.{Measurement, MyBinFile, Parameter, Record, Signal}
+import org.bosch.common.generators.BinFileWriter.{decodeFromFile, decodeFromStream, decodeHeader}
 
 object Parser {
 
   val DefaultPath:String = "common/src/main/scala/org/bosch/common/out/ab"
   val ChunkSize: Int = 4096
+  var signalCount:Int = 0
   /**
    * Splits a Chunk into a map of Measurements by their signalId
    * @param chunk Chunk of n Measurements
@@ -87,7 +88,7 @@ object Parser {
   def parseFile(path:String = DefaultPath): scala.Stream[Record] = {
     val (file,measurements) = decodeFromFile(path)
     val fileName: String = path.split("/").last
-
+    signalCount = file.signals.size
     splitDataBySignals(
       measurements
       .chunkN(ChunkSize)
@@ -102,7 +103,7 @@ object Parser {
   def parseStream(rawStream: Stream[IO,Byte],path:String):scala.Stream[Record] = {
     val (file,measurements) = decodeFromStream(rawStream)
     val fileName: String = path.split("/").last
-
+    signalCount = file.signals.size
     splitDataBySignals(
       measurements
         .chunkN(ChunkSize)
@@ -111,7 +112,10 @@ object Parser {
       .map(e => (file.signals.find(s => s.id==e._1).getOrElse(Signal(1,1,1,"1","1")),e._2))
       .map(e => transformToRecord(fileName,e._1,e._2))
       .toStream
+  }
 
+  def parseHeader(path:String):MyBinFile = {
+    decodeHeader(path,ChunkSize)
   }
 
   def main(args: Array[String]): Unit = {

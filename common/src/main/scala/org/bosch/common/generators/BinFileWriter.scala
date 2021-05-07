@@ -125,6 +125,23 @@ object BinFileWriter extends IOApp {
         .through(measurementDecoder.toPipeByte[IO])
 
     (MyBinFile(header, signals), measurements)
+  }
 
+  def decodeHeader(path: String,chunkSize:Int):MyBinFile = {
+    val headerAndSignalsDecoder: StreamDecoder[(Header, Vector[Signal])] = StreamDecoder
+      .once(Header.codec.flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
+
+    val (header, signals) = Stream.resource(Blocker[IO]).flatMap { blocker =>
+      fs2.io.file
+        .readAll[IO](Paths.get(path), blocker, chunkSize)
+        .through(headerAndSignalsDecoder.toPipeByte[IO])
+        .head
+    }
+      .compile
+      .toList
+      .unsafeRunSync()
+      .head
+
+    MyBinFile(header,signals)
   }
 }
