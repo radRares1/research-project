@@ -138,7 +138,7 @@ object BinFileWriter extends IOApp {
     }
 
     val filteredMeasurements = filters.map {
-      case ("==", ("valueArray", v)) => measurements.filter(_.value == v.toDouble)
+      case ("==", ("valueArray", v)) => measurements.filter(e => math.abs(e.value - v.toDouble) < 1e-9)
       case (">", ("valueArray", v)) => measurements.filter(_.value > v.toDouble)
       case ("<", ("valueArray", v)) => measurements.filter(_.value < v.toDouble)
       case ("==", ("timeArray", v)) => measurements.filter(_.value == v.toLong)
