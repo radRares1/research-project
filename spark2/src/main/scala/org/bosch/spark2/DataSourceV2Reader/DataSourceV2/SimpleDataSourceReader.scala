@@ -1,19 +1,14 @@
 package org.bosch.spark2.DataSourceV2Reader.DataSourceV2
 
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.plans.logical
-import org.apache.spark.sql.catalyst.plans.logical.Filter
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.sources.v2.reader.{DataSourceReader, InputPartition, SupportsPushDownFilters, SupportsPushDownRequiredColumns}
-import org.apache.spark.sql.types.{ArrayType, FloatType, IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 
 import java.util
-import org.apache.spark.sql.sources.v2.reader.DataSourceReader
-import org.apache.spark.sql.sources.v2.reader.SupportsPushDownFilters
-import org.apache.spark.sql.sources.v2.reader.SupportsPushDownRequiredColumns
 
 
-class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
+class SimpleDataSourceReader(val filePath: String) extends DataSourceReader
   with SupportsPushDownRequiredColumns with SupportsPushDownFilters {
 
   var pushedFilters1: Array[Filter] = Array[Filter]()
@@ -27,13 +22,13 @@ class SimpleDataSourceReader(val filePath:String) extends DataSourceReader
 
   override def pruneColumns(requiredSchema: StructType): Unit = ()
 
-   override def pushFilters(filters: Array[Filter]): Array[Filter] = {
+  override def pushFilters(filters: Array[Filter]): Array[Filter] = {
     println("Filters " + filters.toList)
     pushedFilters1 = filters
     pushedFilters1
   }
 
-   override def pushedFilters(): Array[Filter] = pushedFilters1
+  override def pushedFilters(): Array[Filter] = pushedFilters1
 }
 
 object SimpleDataSourceReader {
