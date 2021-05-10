@@ -3,7 +3,7 @@ package org.bosch.common.processing
 import cats.effect.IO
 import fs2.{Chunk, Pure, Stream}
 import org.bosch.common.domain.{Measurement, MyBinFile, Parameter, Record, Signal}
-import org.bosch.common.generators.BinFileWriter.{decodeFromFile, decodeFromStream, decodeHeader}
+import org.bosch.common.generators.BinFileWriter.{decodeFromFile, decodeFromFileWithFilters, decodeFromStream, decodeHeader}
 
 object Parser {
 
@@ -63,7 +63,7 @@ object Parser {
   def transformToRecord(fileName: String, signal: Signal, measurements: Stream[Pure, Measurement]): Record =
     Record(
       filename = fileName,
-      parameter = Parameter(signal),
+      parameter = Parameter(signal.name,signal.unit),
       timeArray = timeArrayFromMeasurements(measurements),
       valueArray = valueArrayFromMeasurements(signal, measurements)
     )
@@ -85,8 +85,9 @@ object Parser {
    * @param path path to the file
    * @return List[Record]
    */
-  def parseFile(path:String = DefaultPath): scala.Stream[Record] = {
-    val (file,measurements) = decodeFromFile(path)
+  def parseFile(path:String = DefaultPath, filters:Map[String,(String,String)] = Map.empty): scala.Stream[Record] = {
+    val (file,measurements) = if(filters.isEmpty) decodeFromFile(path) else decodeFromFileWithFilters(path,filters)
+
     val fileName: String = path.split("/").last
     signalCount = file.signals.size
     splitDataBySignals(
