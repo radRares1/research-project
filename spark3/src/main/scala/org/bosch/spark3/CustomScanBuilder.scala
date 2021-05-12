@@ -10,6 +10,12 @@ import org.apache.spark.unsafe.types.UTF8String
 import org.bosch.common.domain.Record
 import org.bosch.common.processing.Parser
 
+/**
+ * Scan Builder for the Scan class
+ * @param schema
+ * @param properties
+ * @param options
+ */
 case class CustomScanBuilder(schema: StructType, properties: java.util.Map[String, String],
                              options: CaseInsensitiveStringMap) extends ScanBuilder with SupportsPushDownFilters {
 
@@ -18,7 +24,6 @@ case class CustomScanBuilder(schema: StructType, properties: java.util.Map[Strin
   override def build(): Scan = CustomScan(schema, properties, options,pushedFilters())
 
   override def pushFilters(filters: Array[Filter]): Array[Filter] = {
-    println("Filters " + filters.toList)
     pushedFilters1 = filters
     pushedFilters1
   }
@@ -26,6 +31,13 @@ case class CustomScanBuilder(schema: StructType, properties: java.util.Map[Strin
   override def pushedFilters(): Array[Filter] = pushedFilters1
 }
 
+/**
+ * Class that represents the Logical Plan of the data
+ * @param schema given schema
+ * @param properties
+ * @param options
+ * @param pushedFilters pushed fitlers
+ */
 case class CustomScan(schema: StructType, properties: java.util.Map[String, String], options: CaseInsensitiveStringMap,
                       pushedFilters: Array[Filter]) extends Scan {
   override def readSchema(): StructType = schema
@@ -37,6 +49,14 @@ case class CustomScan(schema: StructType, properties: java.util.Map[String, Stri
 
 case class SimplePartition(start: Int, end: Int) extends InputPartition
 
+/**
+ * Class that deals with the Batching of the data, representing the physical plan
+ * It defines a factory that the executor uses to create a PartitionReader for each InputPartition
+ * @param schema given schema
+ * @param properties
+ * @param options
+ * @param pushedFilters pushed filters
+ */
 case class CustomBatch(schema: StructType, properties: java.util.Map[String, String], options: CaseInsensitiveStringMap,
                        pushedFilters: Array[Filter]) extends Batch {
 
@@ -45,7 +65,8 @@ case class CustomBatch(schema: StructType, properties: java.util.Map[String, Str
   val partitionNumber: Int = parser.parseHeader(filename).signals.size
 
 
-  override def planInputPartitions(): Array[InputPartition] = createPartitions() //Array(CustomInputPartition())
+  override def planInputPartitions(): Array[InputPartition] = createPartitions()
+
 
   def createPartitions(): Array[InputPartition] = Array(
     SimplePartition(0, partitionNumber / 4),
@@ -59,24 +80,36 @@ case class CustomBatch(schema: StructType, properties: java.util.Map[String, Str
     CustomPartitionReaderFactory(schema, filename, pushedFilters)
 }
 
-case class CustomInputPartition() extends InputPartition {
-  override def preferredLocations: Array[String] = Array.empty
-}
-
-
+/**
+ * Factory for the Partition Reader
+ * @param schema given schema
+ * @param filePath path to the file
+ * @param pushedFilters filters pushed
+ */
 case class CustomPartitionReaderFactory(schema: StructType, filePath: String, pushedFilters: Array[Filter]) extends PartitionReaderFactory {
   override def createReader(partition: InputPartition): PartitionReader[InternalRow] = {
     CustomPartitionReader(partition.asInstanceOf[SimplePartition], schema, filePath, pushedFilters)
   }
 }
 
+/**
+ * class that reads a partition from the parser and apply the given filters to it
+ * @param partition SimplePartition
+ * @param schema given schema
+ * @param filePath path to the file
+ * @param pushedFilters filters pushed
+ */
 case class CustomPartitionReader(partition: SimplePartition, schema: StructType, filePath: String,
                                  pushedFilters: Array[Filter]) extends PartitionReader[InternalRow] {
-  val parser: Parser.type = Parser
   val recordIterator: Iterator[Record] = read()
 
   var currentIndex: Int = partition.start
 
+  /**
+   * maps spark Filter to a Map
+   * @param filters array of spark Fitlers
+   * @return
+   */
   def mapFilters(filters:Array[Filter]):Map[String,(String,String)] = {
     filters.map {
       case EqualTo("parameter.unit",value) => ("==",("parameter.unit",value.toString))
@@ -84,6 +117,7 @@ case class CustomPartitionReader(partition: SimplePartition, schema: StructType,
       case EqualTo("timeArray",value) => ("==",("timeArray",value.toString))
       case EqualTo("valueArray",value) => ("==",("valueArray",value.toString))
       case GreaterThan("timeArray", value) =>(">",("timeArray",value.toString))
+      case GreaterThan("time", value) =>(">",("time",value.toString))
       case GreaterThan("valueArray", value) =>(">",("valueArray",value.toString))
       case LessThan("timeArray", value) =>(">",("timeArray",value.toString))
       case LessThan("valueArray", value) =>(">",("valueArray",value.toString))
@@ -91,21 +125,35 @@ case class CustomPartitionReader(partition: SimplePartition, schema: StructType,
     }.toMap
   }
 
+  /**
+   * reads the data from the parser
+   * @return Iterator[Record]
+   */
   def read(): Iterator[Record] = {
-    parser.parseFile(filePath,mapFilters(pushedFilters)).iterator
+    Parser.parseFile(filePath,mapFilters(pushedFilters)).iterator
   }
 
+  /**
+   * checks to see if there is data left
+   * @return
+   */
   override def next(): Boolean = currentIndex <= partition.end
 
+  /**
+   * gets and converts the next record to an InternalRow
+   * @return InternalRow of Record
+   */
   override def get(): InternalRow = {
 
     val currentRecord = recordIterator.next()
     val fileName = UTF8String.fromString(currentRecord.filename)
     val timeArray = ArrayData.toArrayData(currentRecord.timeArray)
     val valueArray = ArrayData.toArrayData(currentRecord.valueArray)
+    val paramNameUTF = UTF8String.fromString(currentRecord.parameter.name)
+    val paramUnitUTF = UTF8String.fromString(currentRecord.parameter.unit)
     currentIndex = currentIndex + 1
-    InternalRow(fileName, InternalRow(UTF8String.fromString(currentRecord.parameter.name),
-      UTF8String.fromString(currentRecord.parameter.unit)), timeArray, valueArray)
+
+    InternalRow(fileName, InternalRow(paramNameUTF,paramUnitUTF), timeArray, valueArray)
   }
 
   override def close(): Unit = ()

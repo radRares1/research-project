@@ -2,10 +2,9 @@ package org.bosch.common.generators
 
 
 import java.nio.file.{Paths, StandardOpenOption}
-
 import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import fs2._
-import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
+import org.bosch.common.domain.{Header, Measurement, MyBinFile, Parameter, Signal}
 import org.bosch.common.generators.Generator.generateBinFile
 import scodec.codecs.{provide, vectorOfN}
 import scodec.stream.{StreamDecoder, StreamEncoder}
@@ -106,6 +105,8 @@ object BinFileWriter extends IOApp {
     (MyBinFile(header, signals), measurements)
   }
 
+//  val paramFilter: Parameter => Boolean = ???
+
   def decodeFromFileWithFilters(path: String, filters: Map[String, (String, String)], chunkSize: Int = ChunkSize): (MyBinFile, Stream[IO, Measurement]) = {
 
     val headerAndSignalsDecoder: StreamDecoder[(Header, Vector[Signal])] = StreamDecoder
@@ -123,6 +124,10 @@ object BinFileWriter extends IOApp {
       .toList
       .unsafeRunSync()
       .head
+
+//    signals.filter(s => {val param = Parameter(s.name,s.unit)
+//      paramFilter(param)
+//    } )
 
     val filteredSignals = filters.flatMap {
       case ("==", ("parameter.unit", c)) => signals.filter(_.unit == c)
@@ -173,6 +178,12 @@ object BinFileWriter extends IOApp {
     (MyBinFile(header, signals), measurements)
   }
 
+  /**
+   * method that decodes the header of the file
+   * @param path path to the file
+   * @param chunkSize size of the chunks
+   * @return
+   */
   def decodeHeader(path: String, chunkSize: Int): MyBinFile = {
     val headerAndSignalsDecoder: StreamDecoder[(Header, Vector[Signal])] = StreamDecoder
       .once(Header.codec.flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))

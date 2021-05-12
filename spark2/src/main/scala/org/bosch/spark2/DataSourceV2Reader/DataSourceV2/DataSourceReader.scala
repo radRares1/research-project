@@ -15,7 +15,7 @@ object DataSourceReader {
     // Create a SparkContext using every core of the local machine
     val sc = ss.sparkContext
 
-    val filePath:String = "common/src/main/scala/org/bosch/common/out/a.txt"
+    val filePath:String = "common/src/main/scala/org/bosch/common/out/abcd"
 
     val dataset = ss.read.format("org.bosch.spark2.DataSourceV2Reader.DataSourceV2").load(filePath)
 

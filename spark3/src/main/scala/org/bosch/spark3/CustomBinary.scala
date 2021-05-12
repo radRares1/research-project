@@ -5,6 +5,9 @@ import org.apache.spark.sql.connector.expressions.Transform
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
+/**
+ * Base interface of the DataSource
+ */
 class CustomBinary extends TableProvider {
 
   val parameterSchema: StructType = new StructType().add(StructField("name", StringType)).add(StructField("unit", StringType))
@@ -17,11 +20,13 @@ class CustomBinary extends TableProvider {
       .add(StructField("valueArray", ArrayType(FloatType)))
 
 
-
   override def inferSchema(options: CaseInsensitiveStringMap): StructType = schema
 
   override def getTable(schema: StructType, partitioning: Array[Transform],
-                        properties: java.util.Map[String, String]): Table = CustomTable(schema, properties)
+                        properties: java.util.Map[String, String]): Table = {
+    properties.values().forEach(println)
+    CustomTable(schema, properties)
+  }
 
   override def supportsExternalMetadata(): Boolean = true
 
