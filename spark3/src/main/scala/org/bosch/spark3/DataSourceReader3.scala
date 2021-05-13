@@ -35,7 +35,9 @@ object DataSourceReader3 {
       .master("local[*]")
       .getOrCreate()
 
-    val total = paths.map(e => loadDataSet(ss,e.getPath.replace('\\','/'))).reduce(_ union _)
+    import ss.implicits._
+
+    val total: Dataset[Record] = paths.map(e => loadDataSet(ss,e.getPath.replace('\\','/'))).reduceOption(_ union _).getOrElse(ss.emptyDataset[Record])
 
     //total.show()
 
