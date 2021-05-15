@@ -39,10 +39,19 @@ object DataSourceReader3 {
 
     val total: Dataset[Record] = paths.map(e => loadDataSet(ss,e.getPath.replace('\\','/'))).reduceOption(_ union _).getOrElse(ss.emptyDataset[Record])
 
+
+    val b = paths.map(e => e.getPath.replace('\\', '/')).reduce((a,b) => a + ";" + b)
+    //println(b)
     //total.show()
 
-    val a = total.filter(total("filename") === "b.txt")
-    a.show()
+    val a = ss.read.format("org.bosch.spark3.CustomBinary").option("paths", b)
+      .load()//.filter("parameter.name = 'ch_1'")
+
+
+    a.filter("parameter.name = 'ch_1'").show
+    a.filter("filename = 'b.txt'").filter("parameter.name = 'ch_1'").show
+    //a.show()
+    println(a.count())
     a.explain(true)
 
   }

@@ -132,7 +132,7 @@ object BinFileWriter extends IOApp {
     val filteredSignals = filters.flatMap {
       case ("==", ("parameter.unit", c)) => signals.filter(_.unit == c)
       case ("==", ("parameter.name", c)) => signals.filter(_.name == c)
-      case _ => Vector.empty
+      case _ => signals
     }.toVector
 
     val measurements: Stream[IO, Measurement] = Stream.resource(Blocker[IO]).flatMap { blocker =>
