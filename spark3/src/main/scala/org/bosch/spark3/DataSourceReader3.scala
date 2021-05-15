@@ -40,7 +40,7 @@ object DataSourceReader3 {
     val total: Dataset[Record] = paths.map(e => loadDataSet(ss,e.getPath.replace('\\','/'))).reduceOption(_ union _).getOrElse(ss.emptyDataset[Record])
 
 
-    val b = paths.map(e => e.getPath.replace('\\', '/')).reduce((a,b) => a + ";" + b)
+    val b = paths.map(e => e.getPath.replace('\\', '/')).reduceOption((a,b) => a + ";" + b).getOrElse("")
     //println(b)
     //total.show()
 
