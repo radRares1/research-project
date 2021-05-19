@@ -72,8 +72,8 @@ case class CustomBatch(schema: StructType, properties: java.util.Map[String, Str
       Parser.parseHeader(filePath).signals.size
     }
     else {
-      filePath = options.get("paths")
-      val paths = filePath.split(';')
+      val pathsRaw = options.get("paths")
+      val paths = pathsRaw.slice(1,pathsRaw.length-1).split(",").toList.map(e => e.slice(1,e.length-1))
 
       pushedFilters match {
         case Array(_,EqualTo("filename",v),_*) => paths.filter(e => e.split("/").last == v).map(e => Parser.parseHeader(e).signals.size).sum
@@ -160,8 +160,9 @@ case class CustomPartitionReader(partition: SimplePartition, schema: StructType,
       Parser.parseFile(filePath, mapFilters(pushedFilters)).toArray
     }
     else {
-      filePath = options.get("paths")
-      val paths = filePath.split(';')
+      val pathsRaw = options.get("paths")
+      val paths = pathsRaw.slice(1,pathsRaw.length-1).split(",").toList.map(e => e.slice(1,e.length-1))
+
       pushedFilters match {
         case Array(_, EqualTo("filename",value), _*) =>
           paths

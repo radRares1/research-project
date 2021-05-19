@@ -22,6 +22,8 @@ object Reader {
 
   def main(args: Array[String]) {
 
+    val startTimeMillis = System.currentTimeMillis()
+
     Logger.getLogger("org").setLevel(Level.ERROR)
 
     val ss = SparkSession
@@ -40,7 +42,6 @@ object Reader {
 //    val n = file.flatMap(e => parseStream(Stream.emits(e._2.toArray()), e._1))
 //    n.toDF().show()
 
-
     val recordRDD = file.map{ case (file, pds) =>
       val dis = pds.open()
       val bytes = Array.ofDim[Byte](4096)
@@ -53,18 +54,21 @@ object Reader {
     }.flatMap(e => parseStream(e._2, e._1))
     recordRDD.toDF().show()
 
+//    val recordRDD2 = file.map{ case (file, pds) =>
+//      val dis = pds.open()
+//      val bytes = Array.ofDim[Byte](4096)
+//      var all = scala.Stream[Stream[IO, Byte]]()
+//      while( dis.read(bytes) != -1) {
+//        all = scala.Stream.concat(all,scala.Stream(Stream.fromIterator[IO](bytes.toVector.iterator)))
+//      }
+//
+//      (file,processStream(all))
+//    }.flatMap(e => parseStream(e._2, e._1))
+//    recordRDD2.toDF().show(2)
 
-    val recordRDD2 = file.map{ case (file, pds) =>
-      val dis = pds.open()
-      val bytes = Array.ofDim[Byte](4096)
-      var all = scala.Stream[Stream[IO, Byte]]()
-      while( dis.read(bytes) != -1) {
-        all = scala.Stream.concat(all,scala.Stream(Stream.fromIterator[IO](bytes.toVector.iterator)))
-      }
-
-      (file,processStream(all))
-    }.flatMap(e => parseStream(e._2, e._1))
-    recordRDD2.toDF().show(2)
+    val endTimeMillis = System.currentTimeMillis()
+    val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
+    println(durationSeconds)
 
   }
 
@@ -83,22 +87,5 @@ object Reader {
   def fromStream[A](ss: scala.Stream[A]): Stream[IO, A] = fs2.Stream.unfold(ss) {
     case hd #:: tl => Some((hd, tl))
     case _ => None
-  }
-
-  def read(bufSize: Int, dis:DataInputStream): ByteBuffer = {
-
-    require(bufSize >= 0, "Chunk size must be positive")
-
-    val bytes: Array[Byte] = Array.ofDim[Byte](bufSize)
-
-    val readBytes: Int = Try(IOUtils.read(dis, bytes)) match {
-
-      case Failure(exception) =>
-        println(s"Couldn't read chunk. Reason: $exception")
-        0
-      case Success(nBytes) => nBytes
-    }
-
-    ByteBuffer.wrap(bytes.take(readBytes))
   }
 }

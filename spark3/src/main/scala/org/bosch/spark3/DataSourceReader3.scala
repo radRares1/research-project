@@ -1,6 +1,7 @@
 package org.bosch.spark3
 
-import org.apache.spark.sql.{Column, Dataset, SparkSession, functions}
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.{Dataset, SparkSession}
 import org.bosch.common.domain.Record
 
 import java.io.File
@@ -39,20 +40,22 @@ object DataSourceReader3 {
 
     val total: Dataset[Record] = paths.map(e => loadDataSet(ss,e.getPath.replace('\\','/'))).reduceOption(_ union _).getOrElse(ss.emptyDataset[Record])
 
+    val startTimeMillis = System.currentTimeMillis()
 
-    val b = paths.map(e => e.getPath.replace('\\', '/')).reduceOption((a,b) => a + ";" + b).getOrElse("")
-    //println(b)
-    //total.show()
+    //loadDataSet(ss,"common/src/main/scala/org/bosch/common/out/abc").show()
 
-    val a = ss.read.format("org.bosch.spark3.CustomBinary").option("paths", b)
-      .load()//.filter("parameter.name = 'ch_1'")
+    val endTimeMillis = System.currentTimeMillis()
+    val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
+    println(durationSeconds)
 
+    val b = paths.map(e => e.getPath.replace('\\', '/'))
 
-    a.filter("parameter.name = 'ch_1'").show
+    val a = ss.read.format("org.bosch.spark3.CustomBinary")
+      .load(b:_*)
+
+    a.filter(col("parameter.name") === "ch_1").show
     a.filter("filename = 'b.txt'").filter("parameter.name = 'ch_1'").show
-    //a.show()
-    println(a.count())
-    a.explain(true)
+//    a.explain(true)
 
   }
 }

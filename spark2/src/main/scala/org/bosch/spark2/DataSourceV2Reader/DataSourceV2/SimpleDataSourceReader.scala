@@ -23,7 +23,6 @@ class SimpleDataSourceReader(val filePath: String) extends DataSourceReader
   override def pruneColumns(requiredSchema: StructType): Unit = ()
 
   override def pushFilters(filters: Array[Filter]): Array[Filter] = {
-    println("Filters " + filters.toList)
     pushedFilters1 = filters
     pushedFilters1
   }

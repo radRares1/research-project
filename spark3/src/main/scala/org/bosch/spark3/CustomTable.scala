@@ -12,7 +12,7 @@ import java.util
  * @param sourceSchema given schema
  * @param properties a map of properties
  */
-case class CustomTable(sourceSchema:StructType, override val properties:java.util.Map[String,String]) extends SupportsRead{
+ case class CustomTable(sourceSchema:StructType, override val properties:java.util.Map[String,String]) extends SupportsRead{
 
   var capabilitiesS:java.util.Set[TableCapability] = new util.HashSet[TableCapability]()
 
