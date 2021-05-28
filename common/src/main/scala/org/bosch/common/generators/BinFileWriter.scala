@@ -2,10 +2,9 @@ package org.bosch.common.generators
 
 
 import java.nio.file.{Paths, StandardOpenOption}
-
 import cats.effect.{Blocker, ContextShift, ExitCode, IO, IOApp}
 import fs2._
-import org.bosch.common.domain.{Header, Measurement, MyBinFile, Signal}
+import org.bosch.common.domain.{Header, Measurement, MyBinFile, Parameter, Signal}
 import org.bosch.common.generators.Generator.generateBinFile
 import scodec.codecs.{provide, vectorOfN}
 import scodec.stream.{StreamDecoder, StreamEncoder}
@@ -95,6 +94,7 @@ object BinFileWriter extends IOApp {
       .unsafeRunSync()
       .head
 
+
     val measurements: Stream[IO, Measurement] = Stream.resource(Blocker[IO]).flatMap { blocker =>
       fs2.io.file
         .readAll[IO](Paths.get(path), blocker, chunkSize)
@@ -104,6 +104,57 @@ object BinFileWriter extends IOApp {
 
     (MyBinFile(header, signals), measurements)
   }
+
+//  val paramFilter: Parameter => Boolean = ???
+
+  def decodeFromFileWithFilters(path: String, filters: Map[String, (String, String)], chunkSize: Int = ChunkSize): (MyBinFile, Stream[IO, Measurement]) = {
+
+    val headerAndSignalsDecoder: StreamDecoder[(Header, Vector[Signal])] = StreamDecoder
+      .once(Header.codec.flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
+
+    val measurementDecoder: StreamDecoder[Measurement] = StreamDecoder.many(Measurement.codec)
+
+    val (header, signals) = Stream.resource(Blocker[IO]).flatMap { blocker =>
+      fs2.io.file
+        .readAll[IO](Paths.get(path), blocker, chunkSize)
+        .through(headerAndSignalsDecoder.toPipeByte[IO])
+        .head
+    }
+      .compile
+      .toList
+      .unsafeRunSync()
+      .head
+
+//    signals.filter(s => {val param = Parameter(s.name,s.unit)
+//      paramFilter(param)
+//    } )
+
+    val filteredSignals = filters.flatMap {
+      case ("==", ("parameter.unit", c)) => signals.filter(_.unit == c)
+      case ("==", ("parameter.name", c)) => signals.filter(_.name == c)
+      case _ => signals
+    }.toVector
+
+    val measurements: Stream[IO, Measurement] = Stream.resource(Blocker[IO]).flatMap { blocker =>
+      fs2.io.file
+        .readAll[IO](Paths.get(path), blocker, chunkSize)
+        .drop(Header.Size + signals.length * Signal.Size)
+        .through(measurementDecoder.toPipeByte[IO])
+    }
+
+    val filteredMeasurements = filters.map {
+      case ("==", ("valueArray", v)) => measurements.filter(e => math.abs(e.value - v.toDouble) < 1e-9)
+      case (">", ("valueArray", v)) => measurements.filter(_.value > v.toDouble)
+      case ("<", ("valueArray", v)) => measurements.filter(_.value < v.toDouble)
+      case ("==", ("timeArray", v)) => measurements.filter(_.value == v.toLong)
+      case (">", ("timeArray", v)) => measurements.filter(_.value > v.toLong)
+      case ("<", ("timeArray", v)) => measurements.filter(_.value < v.toLong)
+      case _ => measurements
+    }.foldLeft(Stream.empty.covaryAll[IO, Measurement])(_ ++ _)
+
+    (MyBinFile(header, filteredSignals), filteredMeasurements)
+  }
+
 
   def decodeFromStream(rawStream: Stream[IO, Byte]): (MyBinFile, Stream[IO, Measurement]) = {
 
@@ -121,10 +172,33 @@ object BinFileWriter extends IOApp {
       .head
 
     val measurements: Stream[IO, Measurement] = rawStream
-        .drop(Header.Size + signals.length * Signal.Size)
-        .through(measurementDecoder.toPipeByte[IO])
+      .drop(Header.Size + signals.length * Signal.Size)
+      .through(measurementDecoder.toPipeByte[IO])
 
     (MyBinFile(header, signals), measurements)
+  }
 
+  /**
+   * method that decodes the header of the file
+   * @param path path to the file
+   * @param chunkSize size of the chunks
+   * @return
+   */
+  def decodeHeader(path: String, chunkSize: Int): MyBinFile = {
+    val headerAndSignalsDecoder: StreamDecoder[(Header, Vector[Signal])] = StreamDecoder
+      .once(Header.codec.flatZip(header => vectorOfN(provide(header.signalNumber), Signal.codec)))
+
+    val (header, signals) = Stream.resource(Blocker[IO]).flatMap { blocker =>
+      fs2.io.file
+        .readAll[IO](Paths.get(path), blocker, chunkSize)
+        .through(headerAndSignalsDecoder.toPipeByte[IO])
+        .head
+    }
+      .compile
+      .toList
+      .unsafeRunSync()
+      .head
+
+    MyBinFile(header, signals)
   }
 }

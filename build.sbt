@@ -1,7 +1,7 @@
 import sbt.Keys.libraryDependencies
 
 name := "research-project"
-organization in ThisBuild := "org.bosch"
+organization in ThisBuild := "io.github.radRares1"
 scalaVersion in ThisBuild := "2.12.13"
 scapegoatVersion in ThisBuild := "1.4.7"
 
@@ -25,11 +25,10 @@ lazy val spark2 = project
   .settings(
     libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.7",
     libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.7",
-      libraryDependencies += "commons-io" % "commons-io" % "2.6"
-
   )
   .dependsOn(common)
 
 lazy val spark3 = project
-  .settings(libraryDependencies += "org.apache.spark" %% "spark-core" % "3.0.1")
+  .settings(libraryDependencies += "org.apache.spark" %% "spark-core" % "3.0.1",
+    libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.0.1")
   .dependsOn(common)
