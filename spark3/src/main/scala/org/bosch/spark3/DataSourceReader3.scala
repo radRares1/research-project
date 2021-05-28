@@ -28,34 +28,30 @@ object DataSourceReader3 {
 
   def main(args: Array[String]): Unit = {
 
+
     val paths = getListOfFiles("common/src/main/scala/org/bosch/common/out/out")
 
-    val ss = SparkSession
+    val session = SparkSession
       .builder()
       .appName("DataSourceSpark3Reader")
       .master("local[*]")
       .getOrCreate()
 
-    import ss.implicits._
-
-    val total: Dataset[Record] = paths.map(e => loadDataSet(ss,e.getPath.replace('\\','/'))).reduceOption(_ union _).getOrElse(ss.emptyDataset[Record])
-
     val startTimeMillis = System.currentTimeMillis()
 
-    //loadDataSet(ss,"common/src/main/scala/org/bosch/common/out/abc").show()
+    loadDataSet(session,"common/src/main/scala/org/bosch/common/out/abc").show()
 
     val endTimeMillis = System.currentTimeMillis()
     val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
-    println(durationSeconds)
 
     val b = paths.map(e => e.getPath.replace('\\', '/'))
 
-    val a = ss.read.format("org.bosch.spark3.CustomBinary")
+    val a = session.read.format("org.bosch.spark3.CustomBinary")
       .load(b:_*)
 
+    a.show
     a.filter(col("parameter.name") === "ch_1").show
     a.filter("filename = 'b.txt'").filter("parameter.name = 'ch_1'").show
-//    a.explain(true)
-
+    a.explain(true)
   }
 }

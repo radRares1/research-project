@@ -1,7 +1,7 @@
 import sbt.Keys.libraryDependencies
 
 name := "research-project"
-organization in ThisBuild := "org.bosch"
+organization in ThisBuild := "io.github.radRares1"
 scalaVersion in ThisBuild := "2.12.13"
 scapegoatVersion in ThisBuild := "1.4.7"
 
